@@ -113,7 +113,7 @@
 <div id="app">
   <img class="bab blink" src="bab.png" alt="밥이">
   <h1 class="logo">밥사주</h1>
-  <p class="sub">사주로 정하는 오늘 점심. 삼성역 한정</p>
+  <p class="sub">니들 사주 뜯어보고 점심 정해줌. 삼성역 밖은 관할 아님</p>
   <div id="view"></div>
 </div>
 <script>
@@ -134,9 +134,9 @@ function err(m){ const e = $('#err'); if (e) e.textContent = m; }
 function screenTeam(){
   render(`
     <div class="card doodle">
-      <label>팀 코드 (영문·숫자·하이픈. 팀끼리 정한 암호)</label>
+      <label>팀 암호부터 대봐 (영문·숫자·하이픈. 팀끼리만 아는 걸로)</label>
       <input id="tc" placeholder="예: media-team" value="${team||''}">
-      <button class="big" onclick="goTeam()">입장하기</button>
+      <button class="big" onclick="goTeam()">들어간다!!</button>
       <div class="err" id="err"></div>
     </div>`);
 }
@@ -159,15 +159,15 @@ async function screenJoin(){
     <div class="card doodle b">
       <div class="memo">처음이네.<br>사주부터 맡기고 가</div>
       ${claimBlock}
-      <label>이름 (팀에서 부르는 걸로)</label>
+      <label>이름 (팀에서 부르는 그 이름으로)</label>
       <input id="nm" maxlength="12" value="${me||''}">
-      <label>생년월일</label>
+      <label>생년월일 (사주 봐야 하니까 솔직하게)</label>
       <div class="row">
         <input id="by" inputmode="numeric" placeholder="1992">
         <input id="bm" inputmode="numeric" placeholder="3">
         <input id="bd" inputmode="numeric" placeholder="15">
       </div>
-      <label>태어난 시 (모르면 그냥 둬)</label>
+      <label>태어난 시 (모르면 그냥 둬. 엄마한테 물어봐도 되고)</label>
       <select id="bh"><option value="">몰라</option>${Array.from({length:24},(_,h)=>`<option value="${h}">${h}시</option>`).join('')}</select>
       <button class="big" onclick="join()">사주 맡기기</button>
       <div class="err" id="err"></div>
@@ -194,15 +194,15 @@ async function screenMood(){
         <div class="mood doodle ${st.moods[me]===m?'on':''}" onclick="setMood('${m}',this)"><span>${e}</span>${m}</div>`).join('')}
       </div>
       <div class="roster">
-        <div class="rt">우리 팀 명단 (${st.members.length}명) — 찍은 사람은 검은 도장</div>
+        <div class="rt">오늘의 참가자 ${st.members.length}명 — 기분 찍으면 검은 도장 쾅</div>
         ${st.members.map(n=>`<span class="mb ${st.moods[n]?'done':''}">${n}${st.moods[n]?' '+(MOODS.find(x=>x[0]===st.moods[n])||['',''])[1]:''}</span>`).join('') || '아직 아무도 없는데;;'}
-        <div class="rt" style="margin-top:6px">오늘 기분 찍은 사람 ${doneNames.length}명</div>
+        <div class="rt" style="margin-top:6px">기분 접수 완료 ${doneNames.length}명. 다 찍어야 사주가 잘 나와;;</div>
       </div>
       <button class="big stamp-btn" onclick="draw()">부적 뽑기</button>
       <div class="err" id="err"></div>
       <button class="big" onclick="screenStats()" style="font-size:20px;padding:10px">📊 이번 달 전적판</button>
-      <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원 초대하기</button>
-      <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡기기</a></div>
+      <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원 끌고오기</button>
+      <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡길래</a></div>
     </div>`);
 }
 window.setMood = async (m, el) => {
@@ -234,7 +234,7 @@ const DEFY_MSG = [
 ];
 function screenResult(r){
   window._last = r;
-  const w = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨 모름';
+  const w = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨는 하늘만 앎';
   const defy = r.defy;
   const whyBlock = defy
     ? `<ul class="why"><li>그만 좀 거슬러!!!! 사주 안 볼래 ㅡㅡ</li><li>당신들이 진짜 원하는 음식: <b>${defy.category}</b></li><li>그냥 이거 먹어</li></ul>`
@@ -261,7 +261,7 @@ function screenResult(r){
       <div class="stamp" style="font-size:${r.pick.n.length>8?22:r.pick.n.length>5?27:34}px">${r.pick.n}</div>
       <div class="cat">${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}</div>
       ${whyBlock}
-      <div class="alts">꿩 대신: ${r.alts.map(a=>a.n).join(' / ')}</div>
+      <div class="alts">꿩 대신 닭: ${r.alts.map(a=>a.n).join(' / ')}</div>
       <div class="fortunes">
         <div class="rt" style="font-weight:700">📜 오늘의 사주풀이</div>
         ${r.fortunes.map(f=>`<div class="ft"><b>${f.name}</b> <span class="stars">${'★'.repeat(f.stars||3)}${'☆'.repeat(5-(f.stars||3))}</span> <span class="ilgan">${f.godLabel||''}</span><br>${f.line}${f.remedy?`<br><span class="remedy">💊 ${f.remedy}</span>`:''}</div>`).join('')}
@@ -274,9 +274,9 @@ function screenResult(r){
         <div class="rsn">${r.payer.reason}</div>
       </div>
     </div>
-    <button class="big" onclick="shareBuja()">📸 부적 단톡에 자랑하기</button>
+    <button class="big" onclick="shareBuja()">📸 부적 뽑아서 단톡에 소문내기</button>
     ${r.rejects >= 3 ? '' : `<button class="big" onclick="defyFate('${r.pick.n.replace(/'/g,"\\'")}')">${defyLabel}</button>`}
-    <button class="big" onclick="screenMood()">기분 화면으로</button>
+    <button class="big" onclick="screenMood()">기분 다시 찍으러 갈래</button>
     <div class="err" id="err"></div>`);
 }
 window.defyFate = (place) => ritual({ action:'reject', place, name: me });
@@ -289,7 +289,7 @@ window.shareBuja = async () => {
   const lines = []; // [text, font, size, color, gap, align]
   const G = s => `700 ${s}px Gaegu`, D = s => `${s}px 'Gowun Dodum'`;
   lines.push([r.defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적', G(22), '#1A1A1A', 14, 'c']);
-  const wtxt = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨 모름';
+  const wtxt = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨는 하늘만 앎';
   lines.push([`${r.todayGanji}일 · ${wtxt} · ${r.count}명 합산`, D(18), '#666', 30, 'c']);
   lines.push(['@STAMP@' + r.pick.n, G(r.pick.n.length > 8 ? 38 : 48), '#E8442E', 20, 'c']);
   lines.push([`${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}`, D(19), '#444', 26, 'c']);
@@ -375,17 +375,17 @@ window.screenStats = async () => {
   const row = (icon, name, n, unit) => `<div class="rank"><b>${icon} ${name}</b><span class="bar"></span><span class="cnt">${n}${unit}</span></div>`;
   render(`
     <div class="card doodle">
-      <div class="memo">📊 이번 달 전적판<br>사주는 기억한다</div>
+      <div class="memo">📊 이번 달 전적판<br>사주는 다 기억하고 있어</div>
       <div class="roster board">
         <div class="rt" style="font-weight:700">💸 밥살 운명에 당첨된 횟수</div>
-        ${pays.length ? pays.map(([n, c], i) => row(medal(i), n, c, '번')).join('') : '<div class="rank">아직 아무도 안 삼. 평화롭네</div>'}
+        ${pays.length ? pays.map(([n, c], i) => row(medal(i), n, c, '번')).join('') : '<div class="rank">아직 아무도 안 삼. 수상할 정도로 평화롭네;;</div>'}
       </div>
       <div class="roster board">
         <div class="rt" style="font-weight:700">🙅 운명 거스르기 최다 시도</div>
-        ${defies.length ? defies.map(([n, c], i) => row(i === 0 ? '⚡' : '🌀', n, c, '회')).join('') : '<div class="rank">다들 순순히 운명을 받아들임</div>'}
+        ${defies.length ? defies.map(([n, c], i) => row(i === 0 ? '⚡' : '🌀', n, c, '회')).join('') : '<div class="rank">다들 순순히 운명을 받아들임. 착하네</div>'}
       </div>
       ${defies.length ? `<div class="status">${defies[0][0]} — 사주가 널 주시하고 있어;;</div>` : ''}
-      <button class="big" onclick="screenMood()">기분 화면으로</button>
+      <button class="big" onclick="screenMood()">기분 찍으러 돌아가기</button>
     </div>`);
 };
 
