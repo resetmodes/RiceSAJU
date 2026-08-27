@@ -54,6 +54,8 @@ export default async function handler(req, res) {
     const kMembers = `bapsaju:${team}:members`;
     const kDay = `bapsaju:${team}:${today.key}`;
     const kRecent = `bapsaju:${team}:recent`;
+    const kStats = `bapsaju:${team}:stats:${today.key.slice(0, 7)}`; // 월간 전적
+    const STATS_TTL = 60 * 60 * 24 * 40;
 
     if (req.method === 'POST' && body.action === 'join') {
       // 멤버 등록/수정: {name, birth:{y,m,d,hour?}}
@@ -81,6 +83,7 @@ export default async function handler(req, res) {
       // 운명 거스르기: 방금 나온 추천을 거절 목록에 쌓고 다시 뽑는다
       const kReject = `bapsaju:${team}:reject:${today.key}`;
       if (body.place) { await redis(['RPUSH', kReject, String(body.place).slice(0, 40)]); await redis(['EXPIRE', kReject, TTL]); }
+      if (body.name) { await redis(['HINCRBY', kStats, `defy:${String(body.name).slice(0, 12)}`, '1']); await redis(['EXPIRE', kStats, String(STATS_TTL)]); }
       body.action = 'draw'; // 아래 draw로 이어짐
     }
 
@@ -107,6 +110,9 @@ export default async function handler(req, res) {
       const kept = recent.filter(r => r.date !== today.key).slice(-2);
       kept.push({ date: today.key, name: result.pick.n });
       await redis(['SET', kRecent, JSON.stringify(kept), 'EX', String(TTL)]);
+      // 밥살 사람 월간 전적 — 같은 날 여러 번 뽑아도 1회만
+      const first = await redis(['SET', `bapsaju:${team}:payday:${today.key}`, result.payer.name, 'NX', 'EX', String(TTL)]);
+      if (first) { await redis(['HINCRBY', kStats, `pay:${result.payer.name}`, '1']); await redis(['EXPIRE', kStats, String(STATS_TTL)]); }
       return res.json({ ...result, weather, count: active.length, names: active.map(a => a.name), rejects: rejected.length });
     }
 
@@ -115,7 +121,13 @@ export default async function handler(req, res) {
     const dayRaw = await redis(['HGETALL', kDay]) || [];
     const moods = {};
     for (let i = 0; i < dayRaw.length; i += 2) moods[dayRaw[i]] = dayRaw[i + 1];
-    return res.json({ members: Object.keys(members), moods, today: today.key });
+    const statsRaw = await redis(['HGETALL', kStats]) || [];
+    const stats = { pay: {}, defy: {} };
+    for (let i = 0; i < statsRaw.length; i += 2) {
+      const [kind, who] = statsRaw[i].split(':');
+      if (stats[kind]) stats[kind][who] = +statsRaw[i + 1];
+    }
+    return res.json({ members: Object.keys(members), moods, today: today.key, stats });
   } catch (e) {
     if (e.message === 'no-redis') return res.status(500).json({ error: 'Redis 설정이 없음. README 보고 환경변수부터' });
     console.error(e);

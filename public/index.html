@@ -85,6 +85,23 @@
   .err { color:var(--stamp); font-weight:700; margin-top:12px; }
   .hidden { display:none; }
 
+  /* 의식 화면: 무당 멘트가 차례로 지나감 */
+  .ritual { text-align:center; margin-top:36px; font-family:Gaegu, sans-serif; font-size:26px; font-weight:700; min-height:80px; }
+  .ritual .om { animation:omIn .5s ease-out; }
+  @keyframes omIn { from{ opacity:0; transform:translateY(10px) rotate(-1deg) } to{ opacity:1; transform:none } }
+  .ritual .dots { font-size:18px; opacity:.6; margin-top:8px; letter-spacing:4px; }
+
+  /* 도장 쾅 */
+  .buja .stamp { animation:slam .5s cubic-bezier(.2,1.6,.4,1) .55s backwards; }
+  @keyframes slam { 0%{ transform:scale(3) rotate(10deg); opacity:0 } 60%{ transform:scale(.92) rotate(-4deg); opacity:1 } 100%{ transform:scale(1) rotate(-3deg) } }
+  @keyframes quake { 0%,100%{ transform:rotate(1.2deg) } 25%{ transform:rotate(.4deg) translate(2px,1px) } 75%{ transform:rotate(2deg) translate(-2px,0) } }
+
+  /* 전적판 */
+  .board .rank { display:flex; align-items:baseline; gap:8px; margin:6px 0; font-size:16px; }
+  .board .rank b { font-size:19px; }
+  .board .bar { flex:1; border-bottom:2.5px dotted var(--ink); opacity:.4; }
+  .board .cnt { font-family:Gaegu, sans-serif; font-size:22px; font-weight:700; color:var(--stamp); }
+
   /* 로딩: 밥이가 러프 버전으로 흐트러지며 갸웃갸웃 */
   .loading .bab { content:url('bab-rough.png'); animation:wobble .5s ease-in-out infinite alternate; }
   @keyframes wobble { from{ transform:rotate(-5deg) } to{ transform:rotate(5deg) } }
@@ -183,6 +200,7 @@ async function screenMood(){
       </div>
       <button class="big stamp-btn" onclick="draw()">부적 뽑기</button>
       <div class="err" id="err"></div>
+      <button class="big" onclick="screenStats()" style="font-size:20px;padding:10px">📊 이번 달 전적판</button>
       <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원 초대하기</button>
       <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡기기</a></div>
     </div>`);
@@ -192,15 +210,21 @@ window.setMood = async (m, el) => {
   el.classList.add('on'); myMood = m;
   try { await api({ action:'mood', name: me, mood: m }); screenMood(); } catch(e){ err(e.message); }
 };
-window.draw = async () => {
+const OMENS = ['생년월일 대조하는 중', '오행 개수 세는 중', '삼성동 기운 읽는 중', '어제 먹은 거 떠올리는 중', '부적에 도장 찍는 중'];
+async function ritual(body){
   document.body.classList.add('loading'); err('');
+  render('<div class="ritual"><div class="om" id="om"></div><div class="dots">···</div></div>');
+  let i = 0, alive = true;
+  const tick = () => { if (!alive) return; const el = $('#om'); if (el){ el.textContent = OMENS[Math.min(i++, OMENS.length-1)] + '…'; el.classList.remove('om'); void el.offsetWidth; el.classList.add('om'); } };
+  tick(); const iv = setInterval(tick, 550);
   try {
-    const r = await api({ action:'draw' });
-    await new Promise(z=>setTimeout(z, 900)); // 뜸 들이기
+    const [r] = await Promise.all([api(body), new Promise(z=>setTimeout(z, 2400))]);
+    alive = false; clearInterval(iv);
     screenResult(r);
-  } catch(e){ err(e.message); }
+  } catch(e){ alive = false; clearInterval(iv); alert(e.message); screenMood(); }
   document.body.classList.remove('loading');
-};
+}
+window.draw = () => ritual({ action:'draw' });
 
 // ── 화면 4: 결과 부적 ──
 const DEFY_MSG = [
@@ -209,6 +233,7 @@ const DEFY_MSG = [
   '⚠️ 계속 이러실 거면 그냥 드시고 싶은 걸 드세요',
 ];
 function screenResult(r){
+  window._last = r;
   const w = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨 모름';
   const defy = r.defy;
   const whyBlock = defy
@@ -249,18 +274,86 @@ function screenResult(r){
         <div class="rsn">${r.payer.reason}</div>
       </div>
     </div>
+    <button class="big" onclick="shareBuja()">📸 부적 단톡에 자랑하기</button>
     ${r.rejects >= 3 ? '' : `<button class="big" onclick="defyFate('${r.pick.n.replace(/'/g,"\\'")}')">${defyLabel}</button>`}
     <button class="big" onclick="screenMood()">기분 화면으로</button>
     <div class="err" id="err"></div>`);
 }
-window.defyFate = async (place) => {
-  document.body.classList.add('loading');
-  try {
-    const r = await api({ action:'reject', place });
-    await new Promise(z=>setTimeout(z, 900));
-    screenResult(r);
-  } catch(e){ err(e.message); }
-  document.body.classList.remove('loading');
+window.defyFate = (place) => ritual({ action:'reject', place, name: me });
+
+// 부적을 이미지로 그려서 공유/저장 — 라이브러리 없이 캔버스 수작업
+window.shareBuja = async () => {
+  const r = window._last; if (!r) return;
+  await document.fonts.ready;
+  const W = 640, pad = 44, S = 2; // S: 레티나 배율
+  const lines = []; // [text, font, size, color, gap, align]
+  const G = s => `700 ${s}px Gaegu`, D = s => `${s}px 'Gowun Dodum'`;
+  lines.push([r.defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적', G(22), '#1A1A1A', 14, 'c']);
+  const wtxt = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨 모름';
+  lines.push([`${r.todayGanji}일 · ${wtxt} · ${r.count}명 합산`, D(18), '#666', 30, 'c']);
+  lines.push(['@STAMP@' + r.pick.n, G(r.pick.n.length > 8 ? 38 : 48), '#E8442E', 20, 'c']);
+  lines.push([`${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}`, D(19), '#444', 26, 'c']);
+  const whys = r.defy ? ['그만 좀 거슬러!!!! 사주 안 볼래 ㅡㅡ', `당신들이 진짜 원하는 음식: ${r.defy.category}`] : r.reasons;
+  for (const x of whys) lines.push(['✏️ ' + x, D(17), '#1A1A1A', 10, 'l']);
+  lines.push(['', D(4), '#000', 16, 'l']);
+  lines.push(['📜 오늘의 사주풀이', G(20), '#1A1A1A', 12, 'l']);
+  for (const f of r.fortunes) {
+    lines.push([`${f.name} ${'★'.repeat(f.stars||3)}${'☆'.repeat(5-(f.stars||3))}`, D(17), '#E8442E', 4, 'l']);
+    lines.push([f.line, D(15), '#333', 10, 'l']);
+  }
+  if (r.payer) {
+    lines.push(['', D(4), '#000', 16, 'l']);
+    lines.push(['💸 오늘 밥살 사람: ' + r.payer.name, G(26), '#E8442E', 8, 'l']);
+    lines.push([r.payer.reason, D(15), '#333', 10, 'l']);
+  }
+  // 줄바꿈 계산
+  const cv = document.createElement('canvas'), g = cv.getContext('2d');
+  const wrapped = [];
+  for (const [t, f, col, gap, al] of lines) {
+    g.font = f;
+    const maxW = W - pad * 2, stamp = t.startsWith('@STAMP@');
+    const txt = stamp ? t.slice(7) : t;
+    let cur = '';
+    for (const ch of txt) {
+      if (g.measureText(cur + ch).width > maxW && cur) { wrapped.push([cur, f, col, 4, al, false]); cur = ch; }
+      else cur += ch;
+    }
+    wrapped.push([cur, f, col, gap, al, stamp]);
+  }
+  let H = pad + 10;
+  for (const [t, f, , gap] of wrapped) { g.font = f; H += parseInt(f.match(/(\d+)px/)[1]) * 1.25 + gap; }
+  H += pad;
+  cv.width = W * S; cv.height = H * S; g.scale(S, S);
+  g.fillStyle = '#FAF6F0'; g.fillRect(0, 0, W, H);
+  // 손그림 테두리 두 겹
+  g.strokeStyle = '#1A1A1A'; g.lineWidth = 3;
+  g.strokeRect(14, 14, W - 28, H - 28);
+  g.strokeStyle = '#E8442E'; g.lineWidth = 1.5;
+  g.strokeRect(22, 22, W - 44, H - 44);
+  let y = pad + 10;
+  for (const [t, f, col, gap, al, stamp] of wrapped) {
+    g.font = f; const size = parseInt(f.match(/(\d+)px/)[1]); y += size;
+    const x = al === 'c' ? W / 2 : pad;
+    g.textAlign = al === 'c' ? 'center' : 'left';
+    if (stamp) { // 도장 테두리
+      const tw = g.measureText(t).width;
+      g.save(); g.translate(W / 2, y - size * .38); g.rotate(-.05);
+      g.strokeStyle = '#E8442E'; g.lineWidth = 4;
+      g.strokeRect(-tw / 2 - 18, -size * .72, tw + 36, size * 1.45);
+      g.restore();
+    }
+    g.fillStyle = col; g.fillText(t, x, y);
+    y += size * .25 + gap;
+  }
+  cv.toBlob(async blob => {
+    const file = new File([blob], 'bapsaju.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch {}
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'bapsaju.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, 'image/png');
 };
 
 window.invite = async () => {
@@ -269,6 +362,31 @@ window.invite = async () => {
   if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
   try { await navigator.clipboard.writeText(text); err(''); alert('초대 문구 복사했어!! 단톡에 붙여넣어'); }
   catch { prompt('이거 복사해서 단톡에 붙여넣어', text); }
+};
+
+// ── 화면 5: 이번 달 전적판 ──
+window.screenStats = async () => {
+  let st = { stats: { pay: {}, defy: {} } };
+  try { st = await api(); } catch (e) { alert(e.message); return; }
+  const s = st.stats || { pay: {}, defy: {} };
+  const rank = obj => Object.entries(obj).sort((a, b) => b[1] - a[1]);
+  const pays = rank(s.pay), defies = rank(s.defy);
+  const medal = i => ['🥇', '🥈', '🥉'][i] || '💸';
+  const row = (icon, name, n, unit) => `<div class="rank"><b>${icon} ${name}</b><span class="bar"></span><span class="cnt">${n}${unit}</span></div>`;
+  render(`
+    <div class="card doodle">
+      <div class="memo">📊 이번 달 전적판<br>사주는 기억한다</div>
+      <div class="roster board">
+        <div class="rt" style="font-weight:700">💸 밥살 운명에 당첨된 횟수</div>
+        ${pays.length ? pays.map(([n, c], i) => row(medal(i), n, c, '번')).join('') : '<div class="rank">아직 아무도 안 삼. 평화롭네</div>'}
+      </div>
+      <div class="roster board">
+        <div class="rt" style="font-weight:700">🙅 운명 거스르기 최다 시도</div>
+        ${defies.length ? defies.map(([n, c], i) => row(i === 0 ? '⚡' : '🌀', n, c, '회')).join('') : '<div class="rank">다들 순순히 운명을 받아들임</div>'}
+      </div>
+      ${defies.length ? `<div class="status">${defies[0][0]} — 사주가 널 주시하고 있어;;</div>` : ''}
+      <button class="big" onclick="screenMood()">기분 화면으로</button>
+    </div>`);
 };
 
 function boot(){
