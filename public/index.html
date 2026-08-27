@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>밥사주</title>
 <link rel="icon" href="bab.png">
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
   :root { --paper:#FAF6F0; --ink:#1A1A1A; --stamp:#E8442E; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:var(--paper); color:var(--ink); font-family:Gaegu, sans-serif; font-size:21px; -webkit-font-smoothing:antialiased;
+  body { background:var(--paper); color:var(--ink); font-family:'Gowun Dodum', sans-serif; font-size:17px; -webkit-font-smoothing:antialiased;
          min-height:100dvh; display:flex; flex-direction:column; align-items:center; overflow-x:hidden; }
   #app { width:100%; max-width:420px; padding:24px 20px 60px; }
 
@@ -18,70 +18,70 @@
             border-radius:255px 15px 225px 15px / 15px 225px 15px 255px; }
   .doodle.b { border-radius:15px 255px 15px 225px / 225px 15px 255px 15px; }
 
-  h1.logo { font-size:54px; font-weight:700; letter-spacing:2px; transform:rotate(-2deg); text-align:center; line-height:1; margin:8px 0 2px; }
-  .sub { text-align:center; font-size:18px; transform:rotate(1deg); opacity:.9; margin-bottom:18px; }
+  h1.logo { font-family:Gaegu, sans-serif; font-size:54px; font-weight:700; letter-spacing:2px; transform:rotate(-2deg); text-align:center; line-height:1; margin:8px 0 2px; }
+  .sub { font-family:Gaegu, sans-serif; text-align:center; font-size:18px; transform:rotate(1deg); opacity:.9; margin-bottom:18px; }
 
   .bab { display:block; width:180px; margin:0 auto; }
   .bab.spin-hat { animation:none; }
 
-  button { font:inherit; font-weight:700; color:var(--ink); background:var(--paper); cursor:pointer;
+  button { font:inherit; font-family:Gaegu, sans-serif; font-weight:700; color:var(--ink); background:var(--paper); cursor:pointer;
            border:2.5px solid var(--ink); padding:10px 18px; font-size:20px;
            border-radius:255px 15px 225px 15px / 15px 225px 15px 255px; transform:rotate(-.6deg); }
   button:active { transform:rotate(-.6deg) scale(.96); }
   button.big { display:block; width:100%; padding:16px; font-size:26px; margin-top:20px; transform:rotate(.4deg); }
   button.stamp-btn { background:var(--stamp); color:#fff; border-color:var(--ink); }
 
-  input, select { font:inherit; font-size:20px; color:var(--ink); background:transparent; width:100%;
+  input, select { font:inherit; font-size:18px; color:var(--ink); background:transparent; width:100%;
            border:none; border-bottom:2.5px solid var(--ink); padding:6px 4px; outline:none; }
-  label { display:block; font-size:18px; opacity:.9; margin:16px 0 0; transform:rotate(-.5deg); }
+  label { display:block; font-size:15px; opacity:.9; margin:16px 0 0; transform:rotate(-.5deg); }
   .row { display:flex; gap:12px; }
 
   /* 기분 스티커 */
   .moods { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
-  .mood { padding:12px 2px; text-align:center; font-size:17px; font-weight:700; user-select:none; word-break:keep-all; }
+  .mood { font-family:Gaegu, sans-serif; padding:12px 2px; text-align:center; font-size:17px; font-weight:700; user-select:none; word-break:keep-all; }
   .mood span { display:block; font-size:26px; font-weight:300; line-height:1.2; }
   .mood.on { background:var(--ink); color:var(--paper); }
   .mood:nth-child(odd){ transform:rotate(-1.4deg); } .mood:nth-child(even){ transform:rotate(1.2deg); }
 
   .card { padding:18px; margin-top:18px; transform:rotate(-.4deg); }
-  .memo { font-size:19px; opacity:.95; }
+  .memo { font-family:Gaegu, sans-serif; font-size:19px; opacity:.95; }
 
   /* 부적 */
   .buja { width:270px; margin:22px auto 0; padding:26px 20px 30px; text-align:center; background:#fff;
           border:3px solid var(--ink); border-radius:12px 200px 12px 200px / 200px 12px 200px 12px;
           transform:rotate(1.2deg); transform-origin:top center; animation:unfold .9s ease-out; }
   @keyframes unfold { 0%{ transform:rotate(1.2deg) scaleY(.05); opacity:0 } 60%{ transform:rotate(1.2deg) scaleY(1.06) } 100%{ transform:rotate(1.2deg) scaleY(1); opacity:1 } }
-  .buja .head { font-size:16px; letter-spacing:6px; opacity:.8; }
-  .buja .stamp { display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; word-break:keep-all; font-weight:700; line-height:1.1;
+  .buja .head { font-family:Gaegu, sans-serif; font-size:16px; letter-spacing:6px; opacity:.8; }
+  .buja .stamp { font-family:Gaegu, sans-serif; display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; word-break:keep-all; font-weight:700; line-height:1.1;
                  color:var(--stamp); border:3.5px solid var(--stamp); transform:rotate(-3deg);
                  border-radius:220px 18px 200px 14px / 16px 200px 14px 220px; }
-  .buja .cat { font-size:18px; opacity:.9; }
-  .buja .why { text-align:left; font-size:18px; margin:14px 0 0; padding-top:12px; border-top:2px dashed var(--ink); }
+  .buja .cat { font-size:15px; opacity:.9; }
+  .buja .why { text-align:left; font-size:15px; margin:14px 0 0; padding-top:12px; border-top:2px dashed var(--ink); }
   .buja .why li { list-style:none; margin:5px 0; }
   .buja .why li::before { content:'✏️ '; }
-  .buja .alts { font-size:17px; opacity:.9; margin-top:12px; }
-  .fortunes { text-align:left; font-size:17px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .buja .alts { font-size:14px; opacity:.9; margin-top:12px; }
+  .fortunes { text-align:left; font-size:14.5px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
   .fortunes .ft { margin:7px 0; }
-  .fortunes .ilgan { font-size:14px; opacity:.8; }
-  .pairs { font-size:18px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .fortunes .ilgan { font-size:12px; opacity:.8; }
+  .pairs { font-size:15px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
   .pairs div { margin:3px 0; }
   .avoid { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
-  .avoid .no { font-size:22px; font-weight:700; text-decoration:line-through; text-decoration-thickness:3px; text-decoration-color:var(--stamp); transform:rotate(-1deg); display:inline-block; }
-  .avoid .rsn { font-size:17px; opacity:.9; }
+  .avoid .no { font-family:Gaegu, sans-serif; font-size:22px; font-weight:700; text-decoration:line-through; text-decoration-thickness:3px; text-decoration-color:var(--stamp); transform:rotate(-1deg); display:inline-block; }
+  .avoid .rsn { font-size:14px; opacity:.9; }
   .payer { margin-top:16px; padding-top:14px; border-top:2px dashed var(--ink); }
-  .payer .who { font-size:26px; font-weight:700; color:var(--stamp); transform:rotate(-1.5deg); display:inline-block; }
-  .payer .rsn { font-size:17px; opacity:.9; }
+  .payer .who { font-family:Gaegu, sans-serif; font-size:26px; font-weight:700; color:var(--stamp); transform:rotate(-1.5deg); display:inline-block; }
+  .payer .rsn { font-size:14px; opacity:.9; }
 
   .roster { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
-  .roster .rt { font-size:17px; opacity:.9; margin-bottom:6px; }
-  .roster .mb { display:inline-block; margin:3px 4px 3px 0; padding:4px 12px; font-size:17px; font-weight:700;
+  .roster .rt { font-size:14px; opacity:.9; margin-bottom:6px; }
+  .roster .mb { display:inline-block; margin:3px 4px 3px 0; padding:4px 12px; font-size:15px; font-weight:700;
                 border:2px solid var(--ink); border-radius:200px 14px 180px 12px / 12px 180px 14px 200px; }
   .roster .mb.done { background:var(--ink); color:var(--paper); }
   .roster .mb.pick { cursor:pointer; }
   .fortunes .stars { color:var(--stamp); letter-spacing:2px; }
-  .fortunes .remedy { font-size:15px; opacity:.85; }
-  .fortunes .gj { font-size:13px; opacity:.7; letter-spacing:1px; }
-  .status { font-size:17px; margin-top:14px; opacity:.9; transform:rotate(.5deg); }
+  .fortunes .remedy { font-size:13px; opacity:.85; }
+  .fortunes .gj { font-size:12px; opacity:.7; letter-spacing:1px; }
+  .status { font-size:14px; margin-top:14px; opacity:.9; transform:rotate(.5deg); }
   .err { color:var(--stamp); font-weight:700; margin-top:12px; }
   .hidden { display:none; }
 
