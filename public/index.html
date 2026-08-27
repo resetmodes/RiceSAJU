@@ -246,9 +246,9 @@ async function ritual(body){
   render('<div class="ritual">' + RITSYM + '<div class="om" id="om"></div><div class="dots">···</div></div>');
   let i = 0, alive = true;
   const tick = () => { if (!alive) return; const el = $('#om'); if (el){ el.textContent = OMENS[Math.min(i++, OMENS.length-1)] + '…'; el.classList.remove('om'); void el.offsetWidth; el.classList.add('om'); } };
-  tick(); const iv = setInterval(tick, 550);
+  tick(); const iv = setInterval(tick, 1000); // 한 멘트당 1초씩 읽게
   try {
-    const [r] = await Promise.all([api(body), new Promise(z=>setTimeout(z, 2400))]);
+    const [r] = await Promise.all([api(body), new Promise(z=>setTimeout(z, OMENS.length * 1000 + 200))]);
     alive = false; clearInterval(iv);
     screenResult(r);
   } catch(e){ alive = false; clearInterval(iv); alert(e.message); screenMood(); }
