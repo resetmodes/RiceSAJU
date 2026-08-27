@@ -113,7 +113,7 @@
 <div id="app">
   <img class="bab blink" src="bab.png" alt="밥이">
   <h1 class="logo">밥사주</h1>
-  <p class="sub">니들 사주 뜯어보고 점심 정해줌. 본사 도보권 밖은 관할 아님</p>
+  <p class="sub">사주 보고 점심 정하면 되눈 거 아니노!! 본사 도보권 한정이야</p>
   <div id="view"></div>
 </div>
 <script>
@@ -134,15 +134,15 @@ function err(m){ const e = $('#err'); if (e) e.textContent = m; }
 function screenTeam(){
   render(`
     <div class="card doodle">
-      <label>팀 암호부터 대봐 (영문·숫자·하이픈. 팀끼리만 아는 걸로)</label>
+      <label>팀 암호를 마래봐 (영문·숫자·하이픈. 팀끼리만 아눈 걸로)</label>
       <input id="tc" placeholder="예: media-team" value="${team||''}">
-      <button class="big" onclick="goTeam()">들어간다!!</button>
+      <button class="big" onclick="goTeam()">입장하겟습니까 습~ 꿀꺽</button>
       <div class="err" id="err"></div>
     </div>`);
 }
 window.goTeam = () => {
   const t = $('#tc').value.trim().toLowerCase();
-  if (!/^[a-z0-9-]{2,32}$/.test(t)) return err('영문 소문자·숫자·하이픈 2~32자야;;');
+  if (!/^[a-z0-9-]{2,32}$/.test(t)) return err('영문 소문자·숫자·하이픈 2~32자로 마래봐;;');
   team = t; location.hash = t; boot();
 };
 
@@ -152,32 +152,32 @@ async function screenJoin(){
   try { existing = (await api()).members || []; } catch {}
   const claimBlock = existing.length ? `
       <div class="roster">
-        <div class="rt">이미 사주 맡긴 사람은 이름만 찍고 들어와 (폰 바꿔도 됨)</div>
+        <div class="rt">이미 사주 맡긴 사람은 이름만 찍으면 되눈 거야 (폰 바꿔도 됨)</div>
         ${existing.map(n=>`<span class="mb pick" onclick="claim('${n.replace(/'/g,"\\'")}')">${n}</span>`).join('')}
       </div>` : '';
   render(`
     <div class="card doodle b">
-      <div class="memo">처음이네.<br>사주부터 맡기고 가</div>
+      <div class="memo">처음 보눈 얼굴이군.<br>사주부터 맡기면 되눈 거 아니노</div>
       ${claimBlock}
-      <label>이름 (팀에서 부르는 그 이름으로)</label>
+      <label>이름 (팀에서 부르눈 그 이름으로)</label>
       <input id="nm" maxlength="12" value="${me||''}">
-      <label>생년월일 (사주 봐야 하니까 솔직하게)</label>
+      <label>생년월일 (사주 봐야 하니까 솔직하게 마래봐)</label>
       <div class="row">
         <input id="by" inputmode="numeric" placeholder="1992">
         <input id="bm" inputmode="numeric" placeholder="3">
         <input id="bd" inputmode="numeric" placeholder="15">
       </div>
-      <label>태어난 시 (모르면 그냥 둬. 엄마한테 물어봐도 되고)</label>
+      <label>태어난 시 (모르면 그냥 둬. 엄마한테 여쭤보면 되잖아)</label>
       <select id="bh"><option value="">몰라</option>${Array.from({length:24},(_,h)=>`<option value="${h}">${h}시</option>`).join('')}</select>
-      <button class="big" onclick="join()">사주 맡기기</button>
+      <button class="big" onclick="join()">사주 맡기겟어</button>
       <div class="err" id="err"></div>
     </div>`);
 }
 window.claim = (name) => { me = name; localStorage.setItem('bapsaju:name', name); screenMood(); };
 window.join = async () => {
   const name = $('#nm').value.trim(), y = +$('#by').value, m = +$('#bm').value, d = +$('#bd').value, hour = $('#bh').value;
-  if (!name) return err('이름은 써야지!!');
-  if (!(y>1920 && y<2020 && m>=1 && m<=12 && d>=1 && d<=31)) return err('생년월일이 좀 이상한데;;');
+  if (!name) return err('이름을 마래봐!!');
+  if (!(y>1920 && y<2020 && m>=1 && m<=12 && d>=1 && d<=31)) return err('생년월일이 상당히 이상하군;;');
   try { await api({ action:'join', name, birth:{ y, m, d, hour } });
     me = name; localStorage.setItem('bapsaju:name', name); screenMood(); } catch(e){ err(e.message); }
 };
@@ -189,20 +189,20 @@ async function screenMood(){
   const doneNames = Object.keys(st.moods);
   render(`
     <div class="card doodle">
-      <div class="memo">${me} 왔구나.<br>오늘 기분 어때!! 하나 찍어</div>
+      <div class="memo">${me} 왓구나!!<br>오늘 기붕이 어때? 하나 찍어봐</div>
       <div class="moods">${MOODS.map(([m,e])=>`
         <div class="mood doodle ${st.moods[me]===m?'on':''}" onclick="setMood('${m}',this)"><span>${e}</span>${m}</div>`).join('')}
       </div>
       <div class="roster">
-        <div class="rt">오늘의 참가자 ${st.members.length}명 — 기분 찍으면 검은 도장 쾅</div>
-        ${st.members.map(n=>`<span class="mb ${st.moods[n]?'done':''}">${n}${st.moods[n]?' '+(MOODS.find(x=>x[0]===st.moods[n])||['',''])[1]:''}</span>`).join('') || '아직 아무도 없는데;;'}
-        <div class="rt" style="margin-top:6px">기분 접수 완료 ${doneNames.length}명. 다 찍어야 사주가 잘 나와;;</div>
+        <div class="rt">오늘의 참가자 ${st.members.length}명 — 기붕 찍으면 검은 도장 쾅</div>
+        ${st.members.map(n=>`<span class="mb ${st.moods[n]?'done':''}">${n}${st.moods[n]?' '+(MOODS.find(x=>x[0]===st.moods[n])||['',''])[1]:''}</span>`).join('') || '아직 아무도 없군;;'}
+        <div class="rt" style="margin-top:6px">기붕 접수 완료 ${doneNames.length}명. 다 찍어야 사주가 잘 나오눈 거 아니노</div>
       </div>
       <button class="big stamp-btn" onclick="draw()">부적 뽑기</button>
       <div class="err" id="err"></div>
       <button class="big" onclick="screenStats()" style="font-size:20px;padding:10px">📊 이번 달 전적판</button>
-      <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원 끌고오기</button>
-      <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡길래</a></div>
+      <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원을 끌고 오겟어</button>
+      <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡기겟어</a></div>
     </div>`);
 }
 window.setMood = async (m, el) => {
@@ -210,7 +210,7 @@ window.setMood = async (m, el) => {
   el.classList.add('on'); myMood = m;
   try { await api({ action:'mood', name: me, mood: m }); screenMood(); } catch(e){ err(e.message); }
 };
-const OMENS = ['생년월일 대조하는 중', '오행 개수 세는 중', '삼성동 기운 읽는 중', '어제 먹은 거 떠올리는 중', '부적에 도장 찍는 중'];
+const OMENS = ['생년월일을 대조하겟습니다 습~ 꿀꺽', '오행 개수를 세눈 중', '본사 기운을 읽눈 중', '어제 먹은 게 뭐엿더라..', '도장을 찍으면 되눈 거 아니노'];
 async function ritual(body){
   document.body.classList.add('loading'); err('');
   render('<div class="ritual"><div class="om" id="om"></div><div class="dots">···</div></div>');
@@ -228,20 +228,20 @@ window.draw = () => ritual({ action:'draw' });
 
 // ── 화면 4: 결과 부적 ──
 const DEFY_MSG = [
-  '운명을 한 번 거스릅니다',
-  '사주가 흔들리고 있잖아!! 그만해!!',
-  '⚠️ 계속 이러실 거면 그냥 드시고 싶은 걸 드세요',
+  '운명을 한 번 거슬럿어. 상당히 실망이야',
+  '사주가 흔들리잖아!! 어이가 없다노!!',
+  '⚠️ 계속 이러면 그냥 먹고 싶은 거 먹으면 되눈 거 아니노',
 ];
 function screenResult(r){
   window._last = r;
   const w = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨는 하늘만 앎';
   const defy = r.defy;
   const whyBlock = defy
-    ? `<ul class="why"><li>그만 좀 거슬러!!!! 사주 안 볼래 ㅡㅡ</li><li>당신들이 진짜 원하는 음식: <b>${defy.category}</b></li><li>그냥 이거 먹어</li></ul>`
+    ? `<ul class="why"><li>그만 좀 거슬러!! 난 실망햇어 상당히 ㅡㅡ</li><li>니들이 진짜 원하눈 음식: <b>${defy.category}</b></li><li>그냥 이거 먹으면 되잖아</li></ul>`
     : `<ul class="why">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul>`;
   const avoidBlock = r.avoid ? `
       <div class="avoid">
-        <div class="memo">🚫 오늘 여기 가면 안 됨</div>
+        <div class="memo">🚫 오늘 여기 가면 안 되눈 거야</div>
         <div class="no">${r.avoid.n}</div>
         <div class="rsn">${r.avoid.why}</div>
       </div>` : '';
@@ -249,9 +249,9 @@ function screenResult(r){
   const matchBlock = (m.best || m.worst) ? `
       <div class="pairs">
         ${m.best ? `<div>💞 오늘의 밥궁합: <b>${m.best.a} ♥ ${m.best.b}</b></div>` : ''}
-        ${m.worst ? `<div>⚡ 오늘의 밥상극: <b>${m.worst.a} ✕ ${m.worst.b}</b> — 마주 앉지 마</div>` : ''}
+        ${m.worst ? `<div>⚡ 오늘의 밥상극: <b>${m.worst.a} ✕ ${m.worst.b}</b> — 마주 앉으면 안 되겟군</div>` : ''}
       </div>` : '';
-  const defyLabel = r.rejects >= 3 ? '인정' : '운명 거스르기';
+  const defyLabel = r.rejects >= 3 ? '인정하겟어' : '운명 거스르기';
   const defyNote = r.rejects > 0 && r.rejects <= 3 ? `<div class="status" style="text-align:center">${DEFY_MSG[Math.min(r.rejects,3)-1]}</div>` : '';
   render(`
     ${defyNote}
@@ -274,9 +274,9 @@ function screenResult(r){
         <div class="rsn">${r.payer.reason}</div>
       </div>
     </div>
-    <button class="big" onclick="shareBuja()">📸 부적 뽑아서 단톡에 소문내기</button>
+    <button class="big" onclick="shareBuja()">📸 부적을 단톡에 소문내겟어</button>
     ${r.rejects >= 3 ? '' : `<button class="big" onclick="defyFate('${r.pick.n.replace(/'/g,"\\'")}')">${defyLabel}</button>`}
-    <button class="big" onclick="screenMood()">기분 다시 찍으러 갈래</button>
+    <button class="big" onclick="screenMood()">기붕 다시 찍으러 가겟어</button>
     <div class="err" id="err"></div>`);
 }
 window.defyFate = (place) => ritual({ action:'reject', place, name: me });
@@ -358,10 +358,10 @@ window.shareBuja = async () => {
 
 window.invite = async () => {
   const url = location.origin + location.pathname + '#' + team;
-  const text = '점심 사주 보러 와!! 이름이랑 생일만 넣으면 돼\n' + url;
+  const text = '점심 사주 보러 오겟습니까 습~ 꿀꺽. 이름이랑 생일만 넣으면 되눈 거야\n' + url;
   if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
-  try { await navigator.clipboard.writeText(text); err(''); alert('초대 문구 복사했어!! 단톡에 붙여넣어'); }
-  catch { prompt('이거 복사해서 단톡에 붙여넣어', text); }
+  try { await navigator.clipboard.writeText(text); err(''); alert('초대 문구 복사햇어!! 단톡에 붙여넣으면 되눈 거 아니노'); }
+  catch { prompt('이거 복사해서 단톡에 붙여넣으면 되눈 거야', text); }
 };
 
 // ── 화면 5: 이번 달 전적판 ──
@@ -375,17 +375,17 @@ window.screenStats = async () => {
   const row = (icon, name, n, unit) => `<div class="rank"><b>${icon} ${name}</b><span class="bar"></span><span class="cnt">${n}${unit}</span></div>`;
   render(`
     <div class="card doodle">
-      <div class="memo">📊 이번 달 전적판<br>사주는 다 기억하고 있어</div>
+      <div class="memo">📊 이번 달 전적판<br>사주는 다 기억하고 잇어</div>
       <div class="roster board">
         <div class="rt" style="font-weight:700">💸 밥살 운명에 당첨된 횟수</div>
-        ${pays.length ? pays.map(([n, c], i) => row(medal(i), n, c, '번')).join('') : '<div class="rank">아직 아무도 안 삼. 수상할 정도로 평화롭네;;</div>'}
+        ${pays.length ? pays.map(([n, c], i) => row(medal(i), n, c, '번')).join('') : '<div class="rank">아직 아무도 안 삿군. 수상할 정도로 평화로워;;</div>'}
       </div>
       <div class="roster board">
         <div class="rt" style="font-weight:700">🙅 운명 거스르기 최다 시도</div>
-        ${defies.length ? defies.map(([n, c], i) => row(i === 0 ? '⚡' : '🌀', n, c, '회')).join('') : '<div class="rank">다들 순순히 운명을 받아들임. 착하네</div>'}
+        ${defies.length ? defies.map(([n, c], i) => row(i === 0 ? '⚡' : '🌀', n, c, '회')).join('') : '<div class="rank">다들 순순히 운명을 받아들엿군. 착해</div>'}
       </div>
-      ${defies.length ? `<div class="status">${defies[0][0]} — 사주가 널 주시하고 있어;;</div>` : ''}
-      <button class="big" onclick="screenMood()">기분 찍으러 돌아가기</button>
+      ${defies.length ? `<div class="status">${defies[0][0]} — 사주가 널 주시하고 잇어;;</div>` : ''}
+      <button class="big" onclick="screenMood()">기붕 찍으러 돌아가겟어</button>
     </div>`);
 };
 
