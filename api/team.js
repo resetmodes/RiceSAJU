@@ -84,10 +84,12 @@ export default async function handler(req, res) {
       const kReject = `bapsaju:${team}:reject:${today.key}`;
       if (body.place) { await redis(['RPUSH', kReject, String(body.place).slice(0, 40)]); await redis(['EXPIRE', kReject, TTL]); }
       if (body.name) { await redis(['HINCRBY', kStats, `defy:${String(body.name).slice(0, 12)}`, '1']); await redis(['EXPIRE', kStats, String(STATS_TTL)]); }
-      body.action = 'draw'; // 아래 draw로 이어짐
+      body.action = 'draw'; body._fromReject = true; // 아래 draw로 이어짐
     }
 
     if (req.method === 'POST' && body.action === 'draw') {
+      // 새로 뽑는 거면(거스르기 아님) 오늘 거절 목록 리셋 — 파업 상태가 하루종일 안 가게
+      if (!body._fromReject) await redis(['DEL', `bapsaju:${team}:reject:${today.key}`]);
       // 부적 뽑기: 오늘 기분 입력된 멤버 합산
       const members = JSON.parse(await redis(['GET', kMembers]) || '{}');
       const dayRaw = await redis(['HGETALL', kDay]) || [];

@@ -47,7 +47,7 @@
   .memo { font-family:Gaegu, sans-serif; font-size:19px; opacity:.95; }
 
   /* 부적 */
-  .buja { width:270px; margin:22px auto 0; padding:26px 20px 30px; text-align:center; background:#fff;
+  .buja { width:100%; max-width:360px; margin:22px auto 0; padding:26px 22px 30px; text-align:center; background:#fff;
           border:3px solid var(--ink); border-radius:12px 200px 12px 200px / 200px 12px 200px 12px;
           transform:rotate(1.2deg); transform-origin:top center; animation:unfold .9s ease-out; }
   @keyframes unfold { 0%{ transform:rotate(1.2deg) scaleY(.05); opacity:0 } 60%{ transform:rotate(1.2deg) scaleY(1.06) } 100%{ transform:rotate(1.2deg) scaleY(1); opacity:1 } }
@@ -264,7 +264,7 @@ function screenResult(r){
       <div class="alts">꿩 대신: ${r.alts.map(a=>a.n).join(' / ')}</div>
       <div class="fortunes">
         <div class="rt" style="font-weight:700">📜 오늘의 사주풀이</div>
-        ${r.fortunes.map(f=>`<div class="ft"><b>${f.name}</b> <span class="ilgan">${f.ilgan}일간 · ${f.god}</span> <span class="stars">${'★'.repeat(f.stars||3)}${'☆'.repeat(5-(f.stars||3))}</span><br>${f.ganji?`<span class="gj">${f.ganji}</span><br>`:''}${f.line}${f.remedy?`<br><span class="remedy">💊 ${f.remedy}</span>`:''}</div>`).join('')}
+        ${r.fortunes.map(f=>`<div class="ft"><b>${f.name}</b> <span class="stars">${'★'.repeat(f.stars||3)}${'☆'.repeat(5-(f.stars||3))}</span> <span class="ilgan">${f.godLabel||''}</span><br>${f.line}${f.remedy?`<br><span class="remedy">💊 ${f.remedy}</span>`:''}</div>`).join('')}
       </div>
       ${matchBlock}
       ${avoidBlock}
