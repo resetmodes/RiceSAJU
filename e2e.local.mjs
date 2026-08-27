@@ -48,8 +48,8 @@ if (process.argv.includes('--check')) {
   } : undefined).then(r => r.json());
   await api({ action: 'join', name: '규빈', birth: { y: 1992, m: 3, d: 15, hour: 14 } });
   await api({ action: 'join', name: '승권', birth: { y: 1990, m: 11, d: 2 } });
-  await api({ action: 'mood', name: '규빈', mood: '든든' });
-  await api({ action: 'mood', name: '승권', mood: '얼큰' });
+  await api({ action: 'mood', name: '규빈', mood: '피곤' });
+  await api({ action: 'mood', name: '승권', mood: '빡침' });
   const st = await api();
   const r = await api({ action: 'draw' });
   console.log('상태:', JSON.stringify(st));

@@ -52,7 +52,7 @@
           transform:rotate(1.2deg); transform-origin:top center; animation:unfold .9s ease-out; }
   @keyframes unfold { 0%{ transform:rotate(1.2deg) scaleY(.05); opacity:0 } 60%{ transform:rotate(1.2deg) scaleY(1.06) } 100%{ transform:rotate(1.2deg) scaleY(1); opacity:1 } }
   .buja .head { font-size:15px; letter-spacing:6px; opacity:.6; }
-  .buja .stamp { display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; font-weight:700; line-height:1.1;
+  .buja .stamp { display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; word-break:keep-all; font-weight:700; line-height:1.1;
                  color:var(--stamp); border:3.5px solid var(--stamp); transform:rotate(-3deg);
                  border-radius:220px 18px 200px 14px / 16px 200px 14px 220px; }
   .buja .cat { font-size:17px; opacity:.7; }
@@ -60,6 +60,9 @@
   .buja .why li { list-style:none; margin:5px 0; }
   .buja .why li::before { content:'✏️ '; }
   .buja .alts { font-size:16px; opacity:.75; margin-top:12px; }
+  .fortunes { text-align:left; font-size:15px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .fortunes .ft { margin:7px 0; }
+  .fortunes .ilgan { font-size:13px; opacity:.6; }
   .pairs { font-size:16px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
   .pairs div { margin:3px 0; }
   .avoid { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
@@ -74,7 +77,7 @@
   .hidden { display:none; }
 
   /* 로딩: 밥이가 러프 버전으로 흐트러지며 갸웃갸웃 */
-  .loading .bab { content:url('bab-rough.jpg'); animation:wobble .5s ease-in-out infinite alternate; }
+  .loading .bab { content:url('bab-rough.png'); animation:wobble .5s ease-in-out infinite alternate; }
   @keyframes wobble { from{ transform:rotate(-5deg) } to{ transform:rotate(5deg) } }
   .blink { animation:blink 4s infinite; }
   @keyframes blink { 0%,94%,100%{opacity:1} 96%,98%{opacity:0} }
@@ -89,7 +92,7 @@
 </div>
 <script>
 const $ = s => document.querySelector(s);
-const MOODS = [['든든','🍚'],['가볍','🥗'],['얼큰','🔥'],['해장','🍲'],['새로','✨'],['아무','🤷']];
+const MOODS = [['신남','🤩'],['피곤','🥱'],['빡침','🤬'],['꿀꿀','☁️'],['설렘','💓'],['무념','🧘']];
 let team = location.hash.slice(1).trim().toLowerCase();
 let me = localStorage.getItem('bapsaju:name') || '';
 let myMood = null;
@@ -151,13 +154,14 @@ async function screenMood(){
   const doneNames = Object.keys(st.moods);
   render(`
     <div class="card doodle">
-      <div class="memo">${me} 왔구나.<br>오늘 기분 하나 찍어!!</div>
+      <div class="memo">${me} 왔구나.<br>오늘 기분 어때!! 하나 찍어</div>
       <div class="moods">${MOODS.map(([m,e])=>`
         <div class="mood doodle ${st.moods[me]===m?'on':''}" onclick="setMood('${m}',this)"><span>${e}</span>${m}</div>`).join('')}
       </div>
       <div class="status">오늘 입력: ${doneNames.length? doneNames.join(', ') : '아직 아무도 없는데;;'} (${doneNames.length}명)</div>
       <button class="big stamp-btn" onclick="draw()">부적 뽑기</button>
       <div class="err" id="err"></div>
+      <button class="big" onclick="invite()" style="font-size:20px;padding:10px">👋 팀원 초대하기</button>
       <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡기기</a></div>
     </div>`);
 }
@@ -207,10 +211,13 @@ function screenResult(r){
     <div class="buja">
       <div class="head">${defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적'}</div>
       <div class="memo">${r.todayGanji}일 · ${w} · ${r.count}명 합산</div>
-      <div class="stamp">${r.pick.n}</div>
+      <div class="stamp" style="font-size:${r.pick.n.length>8?22:r.pick.n.length>5?27:34}px">${r.pick.n}</div>
       <div class="cat">${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}</div>
       ${whyBlock}
       <div class="alts">꿩 대신: ${r.alts.map(a=>a.n).join(' / ')}</div>
+      <div class="fortunes">
+        ${r.fortunes.map(f=>`<div class="ft"><b>${f.name}</b> <span class="ilgan">${f.ilgan}일간 · ${f.god}</span><br>${f.line}</div>`).join('')}
+      </div>
       ${matchBlock}
       ${avoidBlock}
       <div class="payer">
@@ -231,6 +238,14 @@ window.defyFate = async (place) => {
     screenResult(r);
   } catch(e){ err(e.message); }
   document.body.classList.remove('loading');
+};
+
+window.invite = async () => {
+  const url = location.origin + location.pathname + '#' + team;
+  const text = '점심 사주 보러 와!! 이름이랑 생일만 넣으면 돼\n' + url;
+  if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
+  try { await navigator.clipboard.writeText(text); err(''); alert('초대 문구 복사했어!! 단톡에 붙여넣어'); }
+  catch { prompt('이거 복사해서 단톡에 붙여넣어', text); }
 };
 
 function boot(){

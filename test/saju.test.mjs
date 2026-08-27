@@ -39,9 +39,9 @@ test('재성 상극 규칙', () => {
 });
 
 const members = [
-  { name: '규빈', birth: { y: 1992, m: 3, d: 15 }, mood: '든든' },
-  { name: '승권', birth: { y: 1990, m: 11, d: 2 }, mood: '얼큰' },
-  { name: '디전', birth: { y: 1995, m: 6, d: 21 }, mood: '가볍' },
+  { name: '규빈', birth: { y: 1992, m: 3, d: 15 }, mood: '피곤' },
+  { name: '승권', birth: { y: 1990, m: 11, d: 2 }, mood: '빡침' },
+  { name: '디전', birth: { y: 1995, m: 6, d: 21 }, mood: '설렘' },
 ];
 const today = { y: 2026, m: 8, d: 27 };
 
