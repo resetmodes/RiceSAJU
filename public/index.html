@@ -315,9 +315,11 @@ function screenResult(r){
 window.defyFate = (place) => ritual({ action:'reject', place, name: me });
 
 // 부적을 이미지로 그려서 공유/저장 — 라이브러리 없이 캔버스 수작업
+const loadImg = s => new Promise(z => { const i = new Image(); i.onload = () => z(i); i.onerror = () => z(null); i.src = s; });
 window.shareBuja = async () => {
   const r = window._last; if (!r) return;
   await document.fonts.ready;
+  const syms = await Promise.all([2,9,3,5,1,6,7,8,4].map(n => loadImg(`sym${n}.png`)));
   const W = 640, pad = 44, S = 2; // S: 레티나 배율
   const lines = []; // [text, font, size, color, gap, align]
   const G = s => `700 ${s}px Gaegu`, D = s => `${s}px 'Gowun Dodum'`;
@@ -353,7 +355,7 @@ window.shareBuja = async () => {
     }
     wrapped.push([cur, f, col, gap, al, stamp]);
   }
-  let H = pad + 10;
+  let H = pad + 10 + 104; // 머리 심볼 자리
   for (const [t, f, , gap] of wrapped) { g.font = f; H += parseInt(f.match(/(\d+)px/)[1]) * 1.25 + gap; }
   H += pad;
   cv.width = W * S; cv.height = H * S; g.scale(S, S);
@@ -365,12 +367,24 @@ window.shareBuja = async () => {
   g.strokeRect(22, 22, W - 44, H - 44);
   g.beginPath(); g.arc(W / 2, 14, 9, 0, 7); g.fillStyle = '#FAF6F0'; g.fill();
   g.strokeStyle = '#1A1A1A'; g.lineWidth = 3; g.stroke();
+  // 뒤에 깔린 심볼들 — 화면이랑 같은 흩뿌리기
+  const SCAT = [[0,.06,.05,72,-8],[1,.82,.04,80,6],[2,.05,.30,70,7],[3,.85,.28,66,-7],[4,.05,.55,68,5],[5,.84,.52,70,-6],[6,.06,.82,64,-5],[7,.83,.80,62,8]];
+  for (const [si,fx,fy,sz,rot] of SCAT) {
+    const img = syms[si]; if (!img) continue;
+    g.save(); g.globalAlpha = .12;
+    g.translate(fx * W + sz/2, fy * H + sz/2); g.rotate(rot * Math.PI/180);
+    g.drawImage(img, -sz/2, -sz/2, sz, sz * img.height/img.width);
+    g.restore();
+  }
+  // 머리 심볼 — 4번 반짝 합자
+  const head = syms[8];
+  if (head) { const hw = 84, hh = hw * head.height/head.width; g.drawImage(head, W/2 - hw/2, 34, hw, hh); }
   // 낙관 도장
   g.save(); g.translate(W - 62, H - 62); g.rotate(.1);
   g.strokeStyle = '#E8442E'; g.lineWidth = 2.5; g.strokeRect(-19, -19, 38, 38);
   g.fillStyle = '#E8442E'; g.font = '700 26px Gaegu'; g.textAlign = 'center'; g.fillText('밥', 0, 9);
   g.restore();
-  let y = pad + 10;
+  let y = pad + 10 + (syms[8] ? 104 : 0);
   for (const [t, f, col, gap, al, stamp] of wrapped) {
     g.font = f; const size = parseInt(f.match(/(\d+)px/)[1]); y += size;
     const x = al === 'c' ? W / 2 : pad;
