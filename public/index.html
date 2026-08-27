@@ -113,7 +113,7 @@
 <div id="app">
   <img class="bab blink" src="bab.png" alt="밥이">
   <h1 class="logo">밥사주</h1>
-  <p class="sub">니들 사주 뜯어보고 점심 정해줌. 삼성역 밖은 관할 아님</p>
+  <p class="sub">니들 사주 뜯어보고 점심 정해줌. 본사 도보권 밖은 관할 아님</p>
   <div id="view"></div>
 </div>
 <script>
@@ -259,7 +259,7 @@ function screenResult(r){
       <div class="head">${defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적'}</div>
       <div class="memo">${r.todayGanji}일 · ${w} · ${r.count}명 합산</div>
       <div class="stamp" style="font-size:${r.pick.n.length>8?22:r.pick.n.length>5?27:34}px">${r.pick.n}</div>
-      <div class="cat">${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}</div>
+      <div class="cat">${r.pick.c} · 본사에서 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}<br><a href="https://map.naver.com/p/search/${encodeURIComponent(r.pick.n+' 삼성동')}" target="_blank" style="color:inherit">🗺 길찾기 열기</a></div>
       ${whyBlock}
       <div class="alts">꿩 대신 닭: ${r.alts.map(a=>a.n).join(' / ')}</div>
       <div class="fortunes">

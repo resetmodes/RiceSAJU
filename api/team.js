@@ -4,7 +4,7 @@ import { recommend, MOODS } from '../lib/engine.js';
 import { PLACES } from '../lib/places.js';
 
 const TTL = 60 * 60 * 24 * 3; // 날짜 키 3일 자동 청소
-const SAMSUNG = { lat: 37.5088, lon: 127.0632 }; // 삼성역
+const SAMSUNG = { lat: 37.5085, lon: 127.0637 }; // 현대백화점 본사(테헤란로98길) 인근
 
 async function redis(cmd) {
   const url = process.env.UPSTASH_REDIS_REST_URL, token = process.env.UPSTASH_REDIS_REST_TOKEN;
