@@ -1,0 +1,11 @@
+{
+  "name": "bapsaju",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/saju.test.mjs",
+    "e2e": "node e2e.local.mjs --check",
+    "dev": "node e2e.local.mjs"
+  }
+}

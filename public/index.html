@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>밥사주</title>
+<link rel="icon" href="bab.png">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#FAF6F0; --ink:#1A1A1A; --stamp:#E8442E; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--paper); color:var(--ink); font-family:Gaegu, sans-serif; font-size:19px;
+         min-height:100dvh; display:flex; flex-direction:column; align-items:center; overflow-x:hidden; }
+  #app { width:100%; max-width:420px; padding:24px 20px 60px; }
+
+  /* 손그림 테두리 — 유기적 border-radius */
+  .doodle { border:2.5px solid var(--ink); background:var(--paper);
+            border-radius:255px 15px 225px 15px / 15px 225px 15px 255px; }
+  .doodle.b { border-radius:15px 255px 15px 225px / 225px 15px 255px 15px; }
+
+  h1.logo { font-size:54px; font-weight:700; letter-spacing:2px; transform:rotate(-2deg); text-align:center; line-height:1; margin:8px 0 2px; }
+  .sub { text-align:center; font-size:16px; transform:rotate(1deg); opacity:.75; margin-bottom:18px; }
+
+  .bab { display:block; width:180px; margin:0 auto; }
+  .bab.spin-hat { animation:none; }
+
+  button { font:inherit; font-weight:700; color:var(--ink); background:var(--paper); cursor:pointer;
+           border:2.5px solid var(--ink); padding:10px 18px; font-size:20px;
+           border-radius:255px 15px 225px 15px / 15px 225px 15px 255px; transform:rotate(-.6deg); }
+  button:active { transform:rotate(-.6deg) scale(.96); }
+  button.big { display:block; width:100%; padding:16px; font-size:26px; margin-top:20px; transform:rotate(.4deg); }
+  button.stamp-btn { background:var(--stamp); color:#fff; border-color:var(--ink); }
+
+  input, select { font:inherit; font-size:20px; color:var(--ink); background:transparent; width:100%;
+           border:none; border-bottom:2.5px solid var(--ink); padding:6px 4px; outline:none; }
+  label { display:block; font-size:16px; opacity:.7; margin:16px 0 0; transform:rotate(-.5deg); }
+  .row { display:flex; gap:12px; }
+
+  /* 기분 스티커 */
+  .moods { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
+  .mood { padding:14px 4px; text-align:center; font-size:21px; font-weight:700; user-select:none; }
+  .mood span { display:block; font-size:30px; font-weight:300; line-height:1.2; }
+  .mood.on { background:var(--ink); color:var(--paper); }
+  .mood:nth-child(odd){ transform:rotate(-1.4deg); } .mood:nth-child(even){ transform:rotate(1.2deg); }
+
+  .card { padding:18px; margin-top:18px; transform:rotate(-.4deg); }
+  .memo { font-size:17px; opacity:.8; }
+
+  /* 부적 */
+  .buja { width:270px; margin:22px auto 0; padding:26px 20px 30px; text-align:center; background:#fff;
+          border:3px solid var(--ink); border-radius:12px 200px 12px 200px / 200px 12px 200px 12px;
+          transform:rotate(1.2deg); transform-origin:top center; animation:unfold .9s ease-out; }
+  @keyframes unfold { 0%{ transform:rotate(1.2deg) scaleY(.05); opacity:0 } 60%{ transform:rotate(1.2deg) scaleY(1.06) } 100%{ transform:rotate(1.2deg) scaleY(1); opacity:1 } }
+  .buja .head { font-size:15px; letter-spacing:6px; opacity:.6; }
+  .buja .stamp { display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; font-weight:700; line-height:1.1;
+                 color:var(--stamp); border:3.5px solid var(--stamp); transform:rotate(-3deg);
+                 border-radius:220px 18px 200px 14px / 16px 200px 14px 220px; }
+  .buja .cat { font-size:17px; opacity:.7; }
+  .buja .why { text-align:left; font-size:16px; margin:14px 0 0; padding-top:12px; border-top:2px dashed var(--ink); }
+  .buja .why li { list-style:none; margin:5px 0; }
+  .buja .why li::before { content:'✏️ '; }
+  .buja .alts { font-size:16px; opacity:.75; margin-top:12px; }
+  .pairs { font-size:16px; margin-top:12px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .pairs div { margin:3px 0; }
+  .avoid { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .avoid .no { font-size:22px; font-weight:700; text-decoration:line-through; text-decoration-thickness:3px; text-decoration-color:var(--stamp); transform:rotate(-1deg); display:inline-block; }
+  .avoid .rsn { font-size:15px; opacity:.75; }
+  .payer { margin-top:16px; padding-top:14px; border-top:2px dashed var(--ink); }
+  .payer .who { font-size:26px; font-weight:700; color:var(--stamp); transform:rotate(-1.5deg); display:inline-block; }
+  .payer .rsn { font-size:15px; opacity:.75; }
+
+  .status { font-size:16px; margin-top:14px; opacity:.75; transform:rotate(.5deg); }
+  .err { color:var(--stamp); font-weight:700; margin-top:12px; }
+  .hidden { display:none; }
+
+  /* 로딩: 밥이가 러프 버전으로 흐트러지며 갸웃갸웃 */
+  .loading .bab { content:url('bab-rough.jpg'); animation:wobble .5s ease-in-out infinite alternate; }
+  @keyframes wobble { from{ transform:rotate(-5deg) } to{ transform:rotate(5deg) } }
+  .blink { animation:blink 4s infinite; }
+  @keyframes blink { 0%,94%,100%{opacity:1} 96%,98%{opacity:0} }
+</style>
+</head>
+<body>
+<div id="app">
+  <img class="bab blink" src="bab.png" alt="밥이">
+  <h1 class="logo">밥사주</h1>
+  <p class="sub">사주로 정하는 오늘 점심. 삼성역 한정</p>
+  <div id="view"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const MOODS = [['든든','🍚'],['가볍','🥗'],['얼큰','🔥'],['해장','🍲'],['새로','✨'],['아무','🤷']];
+let team = location.hash.slice(1).trim().toLowerCase();
+let me = localStorage.getItem('bapsaju:name') || '';
+let myMood = null;
+
+const api = (body) => fetch('/api/team' + (body ? '' : '?team=' + encodeURIComponent(team)), body ? {
+  method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ team, ...body })
+} : undefined).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || '꼬임'); return j; });
+
+function render(html){ $('#view').innerHTML = html; }
+function err(m){ const e = $('#err'); if (e) e.textContent = m; }
+
+// ── 화면 1: 팀 코드 ──
+function screenTeam(){
+  render(`
+    <div class="card doodle">
+      <label>팀 코드 (영문·숫자·하이픈. 팀끼리 정한 암호)</label>
+      <input id="tc" placeholder="예: media-team" value="${team||''}">
+      <button class="big" onclick="goTeam()">입장하기</button>
+      <div class="err" id="err"></div>
+    </div>`);
+}
+window.goTeam = () => {
+  const t = $('#tc').value.trim().toLowerCase();
+  if (!/^[a-z0-9-]{2,32}$/.test(t)) return err('영문 소문자·숫자·하이픈 2~32자야;;');
+  team = t; location.hash = t; boot();
+};
+
+// ── 화면 2: 프로필 등록 ──
+function screenJoin(){
+  render(`
+    <div class="card doodle b">
+      <div class="memo">처음이네.<br>사주부터 맡기고 가</div>
+      <label>이름 (팀에서 부르는 걸로)</label>
+      <input id="nm" maxlength="12" value="${me||''}">
+      <label>생년월일</label>
+      <div class="row">
+        <input id="by" inputmode="numeric" placeholder="1992">
+        <input id="bm" inputmode="numeric" placeholder="3">
+        <input id="bd" inputmode="numeric" placeholder="15">
+      </div>
+      <label>태어난 시 (모르면 그냥 둬)</label>
+      <select id="bh"><option value="">몰라</option>${Array.from({length:24},(_,h)=>`<option value="${h}">${h}시</option>`).join('')}</select>
+      <button class="big" onclick="join()">사주 맡기기</button>
+      <div class="err" id="err"></div>
+    </div>`);
+}
+window.join = async () => {
+  const name = $('#nm').value.trim(), y = +$('#by').value, m = +$('#bm').value, d = +$('#bd').value, hour = $('#bh').value;
+  if (!name) return err('이름은 써야지!!');
+  if (!(y>1920 && y<2020 && m>=1 && m<=12 && d>=1 && d<=31)) return err('생년월일이 좀 이상한데;;');
+  try { await api({ action:'join', name, birth:{ y, m, d, hour } });
+    me = name; localStorage.setItem('bapsaju:name', name); screenMood(); } catch(e){ err(e.message); }
+};
+
+// ── 화면 3: 오늘 기분 + 뽑기 ──
+async function screenMood(){
+  let st = { members:[], moods:{} };
+  try { st = await api(); } catch {}
+  const doneNames = Object.keys(st.moods);
+  render(`
+    <div class="card doodle">
+      <div class="memo">${me} 왔구나.<br>오늘 기분 하나 찍어!!</div>
+      <div class="moods">${MOODS.map(([m,e])=>`
+        <div class="mood doodle ${st.moods[me]===m?'on':''}" onclick="setMood('${m}',this)"><span>${e}</span>${m}</div>`).join('')}
+      </div>
+      <div class="status">오늘 입력: ${doneNames.length? doneNames.join(', ') : '아직 아무도 없는데;;'} (${doneNames.length}명)</div>
+      <button class="big stamp-btn" onclick="draw()">부적 뽑기</button>
+      <div class="err" id="err"></div>
+      <div class="status" style="text-align:right"><a href="#" onclick="screenJoin();return false" style="color:inherit">사주 다시 맡기기</a></div>
+    </div>`);
+}
+window.setMood = async (m, el) => {
+  document.querySelectorAll('.mood').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on'); myMood = m;
+  try { await api({ action:'mood', name: me, mood: m }); screenMood(); } catch(e){ err(e.message); }
+};
+window.draw = async () => {
+  document.body.classList.add('loading'); err('');
+  try {
+    const r = await api({ action:'draw' });
+    await new Promise(z=>setTimeout(z, 900)); // 뜸 들이기
+    screenResult(r);
+  } catch(e){ err(e.message); }
+  document.body.classList.remove('loading');
+};
+
+// ── 화면 4: 결과 부적 ──
+const DEFY_MSG = [
+  '운명을 한 번 거스릅니다',
+  '사주가 흔들리고 있잖아!! 그만해!!',
+  '⚠️ 계속 이러실 거면 그냥 드시고 싶은 걸 드세요',
+];
+function screenResult(r){
+  const w = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨 모름';
+  const defy = r.defy;
+  const whyBlock = defy
+    ? `<ul class="why"><li>그만 좀 거슬러!!!! 사주 안 볼래 ㅡㅡ</li><li>당신들이 진짜 원하는 음식: <b>${defy.category}</b></li><li>그냥 이거 먹어</li></ul>`
+    : `<ul class="why">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  const avoidBlock = r.avoid ? `
+      <div class="avoid">
+        <div class="memo">🚫 오늘 여기 가면 안 됨</div>
+        <div class="no">${r.avoid.n}</div>
+        <div class="rsn">${r.avoid.why}</div>
+      </div>` : '';
+  const m = r.match || {};
+  const matchBlock = (m.best || m.worst) ? `
+      <div class="pairs">
+        ${m.best ? `<div>💞 오늘의 밥궁합: <b>${m.best.a} ♥ ${m.best.b}</b></div>` : ''}
+        ${m.worst ? `<div>⚡ 오늘의 밥상극: <b>${m.worst.a} ✕ ${m.worst.b}</b> — 마주 앉지 마</div>` : ''}
+      </div>` : '';
+  const defyLabel = r.rejects >= 3 ? '인정' : '운명 거스르기';
+  const defyNote = r.rejects > 0 && r.rejects <= 3 ? `<div class="status" style="text-align:center">${DEFY_MSG[Math.min(r.rejects,3)-1]}</div>` : '';
+  render(`
+    ${defyNote}
+    <div class="buja">
+      <div class="head">${defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적'}</div>
+      <div class="memo">${r.todayGanji}일 · ${w} · ${r.count}명 합산</div>
+      <div class="stamp">${r.pick.n}</div>
+      <div class="cat">${r.pick.c} · 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}</div>
+      ${whyBlock}
+      <div class="alts">꿩 대신: ${r.alts.map(a=>a.n).join(' / ')}</div>
+      ${matchBlock}
+      ${avoidBlock}
+      <div class="payer">
+        <div class="memo">💸 오늘 밥살 사람</div>
+        <div class="who">${r.payer.name}</div>
+        <div class="rsn">${r.payer.reason}</div>
+      </div>
+    </div>
+    ${r.rejects >= 3 ? '' : `<button class="big" onclick="defyFate('${r.pick.n.replace(/'/g,"\\'")}')">${defyLabel}</button>`}
+    <button class="big" onclick="screenMood()">기분 화면으로</button>
+    <div class="err" id="err"></div>`);
+}
+window.defyFate = async (place) => {
+  document.body.classList.add('loading');
+  try {
+    const r = await api({ action:'reject', place });
+    await new Promise(z=>setTimeout(z, 900));
+    screenResult(r);
+  } catch(e){ err(e.message); }
+  document.body.classList.remove('loading');
+};
+
+function boot(){
+  if (!team) return screenTeam();
+  if (!me) return screenJoin();
+  screenMood();
+}
+boot();
+</script>
+</body>
+</html>
