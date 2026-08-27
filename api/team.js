@@ -55,6 +55,7 @@ export default async function handler(req, res) {
     const kDay = `bapsaju:${team}:${today.key}`;
     const kRecent = `bapsaju:${team}:recent`;
     const kStats = `bapsaju:${team}:stats:${today.key.slice(0, 7)}`; // 월간 전적
+    const kClosed = `bapsaju:${team}:closed`; // 없어졌다고 신고된 식당 (팀 공용, 영구)
     const STATS_TTL = 60 * 60 * 24 * 40;
 
     if (req.method === 'POST' && body.action === 'join') {
@@ -87,6 +88,18 @@ export default async function handler(req, res) {
       body.action = 'draw'; body._fromReject = true; // 아래 draw로 이어짐
     }
 
+    if (req.method === 'POST' && body.action === 'closed') {
+      // 없어졌어 신고 — 2명 이상이 신고하면 추천에서 완전히 뺀다
+      const { name, place } = body;
+      if (!place) return res.status(400).json({ error: '어디가 없어졌눈지 마래봐' });
+      const key = String(place).slice(0, 40);
+      await redis(['HSET', `${kClosed}:votes`, `${key}|${String(name || '익명').slice(0, 12)}`, '1']);
+      const votesRaw = await redis(['HKEYS', `${kClosed}:votes`]) || [];
+      const votes = votesRaw.filter(k => k.split('|')[0] === key).length;
+      if (votes >= 2) await redis(['SADD', kClosed, key]);
+      return res.json({ ok: true, votes, closed: votes >= 2 });
+    }
+
     if (req.method === 'POST' && body.action === 'draw') {
       // 새로 뽑는 거면(거스르기 아님) 오늘 거절 목록 리셋 — 파업 상태가 하루종일 안 가게
       if (!body._fromReject) await redis(['DEL', `bapsaju:${team}:reject:${today.key}`]);
@@ -102,10 +115,12 @@ export default async function handler(req, res) {
       const weather = await getWeather();
       const recent = JSON.parse(await redis(['GET', kRecent]) || '[]');
       const rejected = (await redis(['LRANGE', `bapsaju:${team}:reject:${today.key}`, '0', '-1'])) || [];
+      const closed = (await redis(['SMEMBERS', kClosed])) || [];
       const result = recommend(active, PLACES, {
         weather: weather?.tag || null,
         recent: recent.filter(r => r.date !== today.key).map(r => r.name),
         rejected,
+        closed,
         today,
       });
       // 뽑힌 곳 이력(3일치)

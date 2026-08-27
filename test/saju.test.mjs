@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { dayPillar, saju, wealthElement, STEMS, BRANCHES } from '../lib/saju.js';
-import { recommend, pickPayer } from '../lib/engine.js';
+import { recommend, pickPayer, MOODS, MOOD_MAP } from '../lib/engine.js';
 import { PLACES } from '../lib/places.js';
 
 const g = p => STEMS[p.stem] + BRANCHES[p.branch];
@@ -98,4 +98,52 @@ test('운명 거스르기 — 거절한 곳은 다시 안 나오고, 3회부터 
   assert.equal(r3.defy.category, r3.pick.c);
   assert.ok(!rejected3.includes(r3.pick.n));
   assert.equal(r3.reasons.length, 0);
+});
+
+test('폐업 신고된 곳은 추천에서 빠진다', () => {
+  const first = recommend(members, PLACES, { weather: null, recent: [], today });
+  const r = recommend(members, PLACES, { weather: null, recent: [], closed: [first.pick.n], today });
+  assert.notEqual(r.pick.n, first.pick.n);
+  assert.ok(!r.alts.map(a => a.n).includes(first.pick.n));
+});
+
+test('부적 등급 — 같은 날 같은 결과, 정해진 4종 중 하나', () => {
+  const a = recommend(members, PLACES, { weather: null, recent: [], today });
+  const b = recommend(members, PLACES, { weather: null, recent: [], today });
+  assert.equal(a.grade.key, b.grade.key);
+  assert.ok(['대길', '길', '평', '흉'].includes(a.grade.key));
+  assert.ok(a.grade.line.length > 0);
+});
+
+test('오늘의 금기어 — 매일 하나, 이유 포함', () => {
+  const r = recommend(members, PLACES, { weather: null, recent: [], today });
+  assert.ok(r.taboo.word.length > 0);
+  assert.ok(r.taboo.why.length > 0);
+  const other = recommend(members, PLACES, { weather: null, recent: [], today: { y: 2026, m: 9, d: 3 } });
+  assert.equal(typeof other.taboo.word, 'string');
+});
+
+test('화해 메뉴 — 밥상극이 있을 때만 나온다', () => {
+  const r = recommend(members, PLACES, { weather: null, recent: [], today });
+  if (r.match?.worst && r.match.worst.s < 0) {
+    assert.equal(r.peace.a, r.match.worst.a);
+    assert.equal(r.peace.b, r.match.worst.b);
+    assert.ok(r.peace.n.length > 0);
+  } else {
+    assert.equal(r.peace, null);
+  }
+});
+
+test('혼자여도 안 터진다 — 궁합·화해는 null', () => {
+  const solo = [{ name: '규빈', birth: { y: 1992, m: 3, d: 15 }, mood: '숙취' }];
+  const r = recommend(solo, PLACES, { weather: null, recent: [], today });
+  assert.ok(r.pick.n);
+  assert.equal(r.match, null);
+  assert.equal(r.peace, null);
+  assert.equal(r.fortunes.length, 1);
+});
+
+test('새 기분 12종 전부 매핑돼 있다', () => {
+  for (const m of MOODS) assert.ok(MOOD_MAP[m]?.length, m + ' 매핑 없음');
+  assert.equal(MOODS.length, 12);
 });

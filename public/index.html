@@ -61,6 +61,28 @@
   .buja .tw { position:absolute; color:var(--stamp); font-size:15px; animation:twinkle 1.6s ease-in-out infinite; }
   .buja .tw1 { left:16px; top:88px; } .buja .tw2 { right:18px; top:120px; animation-delay:.8s; }
   @keyframes twinkle { 0%,100%{ opacity:.25; transform:scale(.8) rotate(0deg) } 50%{ opacity:1; transform:scale(1.15) rotate(20deg) } }
+  /* 부적 등급 리본 */
+  .grade { position:absolute; left:-8px; top:26px; padding:5px 14px 5px 10px; z-index:2;
+           font-family:Gaegu, sans-serif; font-size:19px; font-weight:700; color:#fff; background:var(--ink);
+           border-radius:4px 12px 12px 4px; transform:rotate(-3deg); box-shadow:2px 2px 0 rgba(0,0,0,.15); }
+  .grade.g대길 { background:#C9A227; animation:shine 1.4s ease-in-out infinite; }
+  .grade.g길 { background:#3F7D5A; } .grade.g흉 { background:#5B5B5B; }
+  @keyframes shine { 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.35) } }
+  .buja.daegil { box-shadow:0 0 0 4px #C9A227, 0 0 22px rgba(201,162,39,.55); }
+  /* 금기어 */
+  .taboo { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .taboo .w { font-family:Gaegu, sans-serif; font-size:22px; font-weight:700; color:var(--stamp); }
+  .taboo .why { font-size:14px; opacity:.9; }
+  /* 화해 메뉴 */
+  .peace { margin-top:14px; padding-top:12px; border-top:2px dashed var(--ink); }
+  .peace .mn { font-family:Gaegu, sans-serif; font-size:20px; font-weight:700; }
+  /* 밥살 사람 본인 리액션 */
+  .gotcha { margin:16px auto 0; padding:14px; text-align:center; background:var(--stamp); color:#fff;
+            border:2.5px solid var(--ink); border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+            transform:rotate(-1deg); animation:pop .5s cubic-bezier(.2,1.6,.4,1); }
+  .gotcha .t { font-family:Gaegu, sans-serif; font-size:26px; font-weight:700; }
+  .gotcha .s { font-size:14px; opacity:.95; }
+  @keyframes pop { 0%{ transform:rotate(-1deg) scale(.4); opacity:0 } 100%{ transform:rotate(-1deg) scale(1); opacity:1 } }
   .babsym { display:block; margin:0 auto 6px; width:56px; }
   .ritual .babsym { width:80px; margin:0 auto 14px; animation:wobble .5s ease-in-out infinite alternate; }
   /* 뒤에 깔린 부적 심볼들 */
@@ -157,6 +179,23 @@ const CHARMS = [
 ];
 document.getElementById('charms').innerHTML = CHARMS.map(([n,l,t,s,r],i) =>
   `<img src="sym${n}.png" style="left:${l}%;top:${t}%;width:${s}px;--r:${r}deg;animation-delay:${i*.7}s">`).join('');
+// 밥이 인사 — 요일·시간에 따라 달라진다
+function babGreeting(){
+  const d = new Date(), day = d.getDay(), h = d.getHours();
+  const pools = {
+    1: ['월요일이군. 기운이 탁해;;', '월요일부터 사주를 보러 오다니 대단해'],
+    2: ['화요일은 아직 멀엇어. 밥이라도 잘 먹으면 되눈 거 아니노', '화요일이야. 버티면 되잖아'],
+    3: ['수요일! 반은 왓군', '수요일이야. 슬슬 지치지 않겟습니까 습~ 꿀꺽'],
+    4: ['목요일이군. 거의 다 왓어', '목요일이야. 내일이 금요일이라눈 게 위안이군'],
+    5: ['금요일!! 오늘은 좀 비싼 거 먹어도 되잖아', '금요일이야. 사주도 신낫어'],
+    0: ['주말에 사주를 보러 왓다니;; 상당히 놀라워', '주말인데 일하눈 거야? 어이가 없다노'],
+    6: ['주말에 사주를 보러 왓다니;; 상당히 놀라워', '주말인데 일하눈 거야? 어이가 없다노'],
+  };
+  if (h < 10) return '아침부터 점심 걱정이군. 부지런해';
+  if (h >= 14) return '이미 점심시간 지낫눈데?? 저녁 사주를 봐줄까';
+  const p = pools[day] || pools[2];
+  return p[Math.floor(Math.random() * p.length)];
+}
 function render(html){ $('#view').innerHTML = html; }
 function err(m){ const e = $('#err'); if (e) e.textContent = m; }
 
@@ -219,7 +258,7 @@ async function screenMood(){
   const doneNames = Object.keys(st.moods);
   render(`
     <div class="card doodle">
-      <div class="memo">${me} 왓구나!!<br>오늘 기붕이 어때? 하나 찍어봐</div>
+      <div class="memo">${me} 왓구나!!<br>${babGreeting()}<br>오늘 기붕이 어때? 하나 찍어봐</div>
       <div class="moods">${MOODS.map(([m,e])=>`
         <div class="mood doodle ${st.moods[me]===m?'on':''}" onclick="setMood('${m}',this)"><span>${e}</span>${m}</div>`).join('')}
       </div>
@@ -285,7 +324,8 @@ function screenResult(r){
   const defyNote = r.rejects > 0 && r.rejects <= 3 ? `<div class="status" style="text-align:center">${DEFY_MSG[Math.min(r.rejects,3)-1]}</div>` : '';
   render(`
     ${defyNote}
-    <div class="buja">
+    <div class="buja ${r.grade && r.grade.key === '대길' ? 'daegil' : ''}">
+      ${r.grade ? `<div class="grade g${r.grade.key}">${r.grade.label} ${r.grade.key}</div>` : ''}
       ${BABSYM}
       <span class="tw tw1">✦</span><span class="tw tw2">✧</span>
       <div class="seal">밥</div>
@@ -301,13 +341,32 @@ function screenResult(r){
       </div>
       ${matchBlock}
       ${avoidBlock}
+      ${r.grade ? `<div class="alts" style="opacity:.95">${r.grade.line}</div>` : ''}
+      ${r.taboo ? `
+      <div class="taboo">
+        <div class="memo">🤐 오늘의 금기어</div>
+        <div class="w">"${r.taboo.word}"</div>
+        <div class="why">점심 자리에서 이 말 꺼내면 ${r.taboo.why}</div>
+      </div>` : ''}
+      ${r.peace ? `
+      <div class="peace">
+        <div class="memo">🕊 ${r.peace.a}·${r.peace.b} 화해 메뉴</div>
+        <div class="mn">${r.peace.n} <span style="font-size:14px;opacity:.8">(${r.peace.c})</span></div>
+        <div class="why" style="font-size:14px;opacity:.9">${r.peace.line}</div>
+      </div>` : ''}
       <div class="payer">
         <div class="memo">💸 오늘 밥살 사람</div>
         <div class="who">${r.payer.name}</div>
         <div class="rsn">${r.payer.reason}</div>
       </div>
     </div>
+    ${r.payer.name === me ? `
+    <div class="gotcha">
+      <div class="t">💸 야 너야!!</div>
+      <div class="s">억울하면 내일 사주를 탓하면 되눈 거 아니노</div>
+    </div>` : ''}
     <button class="big" onclick="shareBuja()">📸 부적을 단톡에 소문내겟어</button>
+    <button class="big" onclick="reportClosed('${r.pick.n.replace(/'/g,"\\'")}')" style="font-size:18px;padding:10px">🚧 여기 없어졌어 (신고)</button>
     ${r.rejects >= 3 ? '' : `<button class="big" onclick="defyFate('${r.pick.n.replace(/'/g,"\\'")}')">${defyLabel}</button>`}
     <button class="big" onclick="screenMood()">기붕 다시 찍으러 가겟어</button>
     <div class="err" id="err"></div>`);
@@ -324,6 +383,7 @@ window.shareBuja = async () => {
   const lines = []; // [text, font, size, color, gap, align]
   const G = s => `700 ${s}px Gaegu`, D = s => `${s}px 'Gowun Dodum'`;
   lines.push([r.defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적', G(22), '#1A1A1A', 14, 'c']);
+  if (r.grade) lines.push([`【 ${r.grade.label} ${r.grade.key} 】`, G(24), r.grade.key === '대길' ? '#C9A227' : '#1A1A1A', 12, 'c']);
   const wtxt = r.weather ? `${r.weather.tag} ${Math.round(r.weather.temp)}도` : '날씨는 하늘만 앎';
   lines.push([`${r.todayGanji}일 · ${wtxt} · ${r.count}명 합산`, D(18), '#666', 30, 'c']);
   lines.push(['@STAMP@' + r.pick.n, G(r.pick.n.length > 8 ? 38 : 48), '#E8442E', 20, 'c']);
@@ -335,6 +395,14 @@ window.shareBuja = async () => {
   for (const f of r.fortunes) {
     lines.push([`${f.name} ${'★'.repeat(f.stars||3)}${'☆'.repeat(5-(f.stars||3))}`, D(17), '#E8442E', 4, 'l']);
     lines.push([f.line, D(15), '#333', 10, 'l']);
+  }
+  if (r.taboo) {
+    lines.push(['', D(4), '#000', 12, 'l']);
+    lines.push([`🤐 오늘의 금기어: "${r.taboo.word}"`, G(20), '#E8442E', 4, 'l']);
+    lines.push([`이 말 꺼내면 ${r.taboo.why}`, D(15), '#333', 8, 'l']);
+  }
+  if (r.peace) {
+    lines.push([`🕊 ${r.peace.a}·${r.peace.b} 화해 메뉴: ${r.peace.n}`, D(16), '#333', 8, 'l']);
   }
   if (r.payer) {
     lines.push(['', D(4), '#000', 16, 'l']);
@@ -408,6 +476,17 @@ window.shareBuja = async () => {
     a.href = URL.createObjectURL(blob); a.download = 'bapsaju.png'; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }, 'image/png');
+};
+
+window.reportClosed = async (place) => {
+  if (!confirm(`"${place}" 없어졌어? 2명 이상 신고하면 추천에서 아예 빠져`)) return;
+  try {
+    const r = await api({ action:'closed', name: me, place });
+    alert(r.closed
+      ? `${place} 이제 추천 안 할게. 없어진 걸로 접수햇어`
+      : `신고 접수햇어 (${r.votes}명). 한 명만 더 신고하면 빼겟습니다 습~ 꿀꺽`);
+    if (r.closed) draw();
+  } catch(e){ alert(e.message); }
 };
 
 window.invite = async () => {
