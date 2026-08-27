@@ -61,8 +61,13 @@
   .buja .tw { position:absolute; color:var(--stamp); font-size:15px; animation:twinkle 1.6s ease-in-out infinite; }
   .buja .tw1 { left:16px; top:88px; } .buja .tw2 { right:18px; top:120px; animation-delay:.8s; }
   @keyframes twinkle { 0%,100%{ opacity:.25; transform:scale(.8) rotate(0deg) } 50%{ opacity:1; transform:scale(1.15) rotate(20deg) } }
-  .babsym { display:block; margin:0 auto 6px; width:52px; height:52px; color:var(--ink); }
-  .ritual .babsym { width:74px; height:74px; margin-bottom:14px; animation:wobble .5s ease-in-out infinite alternate; }
+  .babsym { display:block; margin:0 auto 6px; width:56px; }
+  .ritual .babsym { width:80px; margin:0 auto 14px; animation:wobble .5s ease-in-out infinite alternate; }
+  /* 뒤에 깔린 부적 심볼들 */
+  #charms { position:fixed; inset:0; pointer-events:none; z-index:0; }
+  #charms img { position:absolute; opacity:.12; animation:floaty 7s ease-in-out infinite; }
+  @keyframes floaty { 0%,100%{ transform:translateY(0) rotate(var(--r,0deg)) } 50%{ transform:translateY(-9px) rotate(var(--r,0deg)) } }
+  #app { position:relative; z-index:1; }
   @keyframes unfold { 0%{ transform:rotate(1.2deg) scaleY(.05); opacity:0 } 60%{ transform:rotate(1.2deg) scaleY(1.06) } 100%{ transform:rotate(1.2deg) scaleY(1); opacity:1 } }
   .buja .head { font-family:Gaegu, sans-serif; font-size:16px; letter-spacing:6px; opacity:.8; }
   .buja .stamp { font-family:Gaegu, sans-serif; display:inline-block; margin:12px 0 4px; padding:10px 16px; font-size:34px; word-break:keep-all; font-weight:700; line-height:1.1;
@@ -123,6 +128,7 @@
 </style>
 </head>
 <body>
+<div id="charms" aria-hidden="true"></div>
 <div id="app">
   <img class="bab blink" src="bab.png" alt="밥이">
   <h1 class="logo">밥사주</h1>
@@ -140,12 +146,17 @@ const api = (body) => fetch('/api/team' + (body ? '' : '?team=' + encodeURICompo
   method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ team, ...body })
 } : undefined).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || '꼬임'); return j; });
 
-// 밥 합자 심볼 — 위 '바' 아래 'ㅂ'을 세로로 쌓은 손그림 글자
-const BABSYM = `<svg class="babsym" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M22 10 L22 40 M44 10 L44 40 M22 25 L44 25 M22 40 L44 40"/>
-  <path d="M64 8 L64 42 M64 24 L80 24"/>
-  <path d="M30 56 L30 90 M70 56 L70 90 M30 72 L70 72 M30 90 L70 90"/>
-</svg>`;
+// 밥 심볼 누끼 — 부적 머리엔 4번(반짝이 합자), 의식엔 2번(유령 패)
+const BABSYM = `<img class="babsym" src="sym4.png" alt="">`;
+const RITSYM = `<img class="babsym" src="sym2.png" alt="">`;
+// 뒤 배경에 심볼 흩뿌리기 — [번호, left%, top%, 크기px, 회전deg]
+const CHARMS = [
+  [2, 4, 6, 54, -8], [9, 78, 4, 62, 6], [7, 88, 26, 48, -5],
+  [3, 2, 36, 56, 7], [5, 90, 55, 50, -7], [1, 3, 66, 52, 5],
+  [6, 86, 78, 54, -6], [8, 6, 88, 46, 8], [4, 82, 93, 44, -4],
+];
+document.getElementById('charms').innerHTML = CHARMS.map(([n,l,t,s,r],i) =>
+  `<img src="sym${n}.png" style="left:${l}%;top:${t}%;width:${s}px;--r:${r}deg;animation-delay:${i*.7}s">`).join('');
 function render(html){ $('#view').innerHTML = html; }
 function err(m){ const e = $('#err'); if (e) e.textContent = m; }
 
@@ -232,7 +243,7 @@ window.setMood = async (m, el) => {
 const OMENS = ['생년월일을 대조하겟습니다 습~ 꿀꺽', '오행 개수를 세눈 중', '본사 기운을 읽눈 중', '어제 먹은 게 뭐엿더라..', '도장을 찍으면 되눈 거 아니노'];
 async function ritual(body){
   document.body.classList.add('loading'); err('');
-  render('<div class="ritual">' + BABSYM + '<div class="om" id="om"></div><div class="dots">···</div></div>');
+  render('<div class="ritual">' + RITSYM + '<div class="om" id="om"></div><div class="dots">···</div></div>');
   let i = 0, alive = true;
   const tick = () => { if (!alive) return; const el = $('#om'); if (el){ el.textContent = OMENS[Math.min(i++, OMENS.length-1)] + '…'; el.classList.remove('om'); void el.offsetWidth; el.classList.add('om'); } };
   tick(); const iv = setInterval(tick, 550);
