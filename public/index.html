@@ -332,7 +332,7 @@ function screenResult(r){
       <div class="head">${defy ? '사 주 파 업 부 적' : '오 늘 의 점 심 부 적'}</div>
       <div class="memo">${r.todayGanji}일 · ${w} · ${r.count}명 합산</div>
       <div class="stamp" style="font-size:${r.pick.n.length>8?22:r.pick.n.length>5?27:34}px">${r.pick.n}</div>
-      <div class="cat">${r.pick.c} · 본사에서 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}<br><a href="https://map.naver.com/p/search/${encodeURIComponent(r.pick.n+' 삼성동')}" target="_blank" style="color:inherit">🗺 길찾기 열기</a></div>
+      <div class="cat">${r.pick.c} · 본사에서 도보 ${r.pick.d}분 · ${'₩'.repeat(r.pick.p)}<br><a href="${r.pick.url || ('https://map.kakao.com/?q=' + encodeURIComponent(r.pick.n + ' 삼성동'))}" target="_blank" style="color:inherit">🗺 지도에서 보기</a></div>
       ${whyBlock}
       <div class="alts">꿩 대신 닭: ${r.alts.map(a=>a.n).join(' / ')}</div>
       <div class="fortunes">

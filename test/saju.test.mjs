@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import { dayPillar, saju, wealthElement, STEMS, BRANCHES } from '../lib/saju.js';
 import { recommend, pickPayer, MOODS, MOOD_MAP } from '../lib/engine.js';
 import { PLACES } from '../lib/places.js';
+import { tagPlace, toPlace, mergePlaces, fetchPlaces } from '../lib/kakao.js';
 
 const g = p => STEMS[p.stem] + BRANCHES[p.branch];
 
@@ -146,4 +147,65 @@ test('혼자여도 안 터진다 — 궁합·화해는 null', () => {
 test('새 기분 12종 전부 매핑돼 있다', () => {
   for (const m of MOODS) assert.ok(MOOD_MAP[m]?.length, m + ' 매핑 없음');
   assert.equal(MOODS.length, 12);
+});
+
+// ── 카카오 로컬 연동 ──
+test('카카오 카테고리 태깅 — 국물·고기·면이 결에 맞게 붙는다', () => {
+  const gukbap = tagPlace('명동할머니국밥', '음식점 > 한식 > 국밥');
+  assert.ok(gukbap.m.includes('해장'));
+  assert.ok(gukbap.w.includes('추움'));
+
+  const gogi = tagPlace('하남돼지집', '음식점 > 한식 > 육류,고기');
+  assert.ok(gogi.e.includes('화'));
+  assert.ok(gogi.m.includes('든든'));
+
+  const naengmyeon = tagPlace('강남면옥', '음식점 > 한식 > 국수 > 냉면');
+  assert.ok(naengmyeon.w.includes('더움'));
+  assert.ok(naengmyeon.m.includes('가볍'));
+
+  const salad = tagPlace('샐러디', '음식점 > 샐러드');
+  assert.ok(salad.e.includes('목'));
+});
+
+test('카카오 문서 → PLACES 스키마 변환', () => {
+  const p = toPlace({
+    place_name: '한촌설렁탕 코엑스점',
+    category_name: '음식점 > 한식 > 설렁탕',
+    distance: '335',
+    road_address_name: '서울 강남구 영동대로 513',
+    place_url: 'http://place.map.kakao.com/123',
+  });
+  assert.equal(p.n, '한촌설렁탕 코엑스점');
+  assert.equal(p.c, '설렁탕');
+  assert.equal(p.d, 5);            // 335m / 67 = 5분
+  assert.equal(p.url, 'http://place.map.kakao.com/123');
+  assert.ok(Array.isArray(p.e) && p.e.length);
+  assert.ok(Array.isArray(p.m) && p.m.length);
+});
+
+test('병합 — 카카오가 실존 기준, 수기 메모는 살아남는다', () => {
+  const kakao = [toPlace({ place_name: '봉산집', category_name: '음식점 > 한식 > 육류,고기', distance: '800', place_url: 'u1' })];
+  const merged = mergePlaces(kakao, PLACES);
+  const bong = merged.find(p => p.n === '봉산집');
+  assert.equal(bong.url, 'u1');                       // 카카오 좌표·링크 채택
+  assert.ok(bong.note.includes('터줏대감'));            // 수기 메모 보존
+  assert.ok(merged.length >= PLACES.length);           // 수기 단골도 남는다
+});
+
+test('키가 없으면 카카오를 호출하지 않는다', async () => {
+  assert.equal(await fetchPlaces(null), null);
+});
+
+test('카카오 목록으로도 추천이 돈다', () => {
+  const kakaoOnly = [
+    toPlace({ place_name: '가나국밥', category_name: '음식점 > 한식 > 국밥', distance: '120' }),
+    toPlace({ place_name: '다라스시', category_name: '음식점 > 일식 > 초밥,롤', distance: '300' }),
+    toPlace({ place_name: '마바파스타', category_name: '음식점 > 양식 > 이탈리안', distance: '450' }),
+    toPlace({ place_name: '사아버거', category_name: '음식점 > 패스트푸드 > 햄버거', distance: '90' }),
+    toPlace({ place_name: '자차짬뽕', category_name: '음식점 > 중식', distance: '520' }),
+  ];
+  const r = recommend(members, kakaoOnly, { weather: '추움', recent: [], today });
+  assert.ok(kakaoOnly.map(p => p.n).includes(r.pick.n));
+  assert.ok(r.pick.d >= 1);
+  assert.equal(r.alts.length, 2);
 });

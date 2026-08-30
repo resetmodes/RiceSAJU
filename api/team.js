@@ -2,9 +2,10 @@
 // 환경변수: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, OPENWEATHER_KEY(선택)
 import { recommend, MOODS } from '../lib/engine.js';
 import { PLACES } from '../lib/places.js';
+import { fetchPlaces, mergePlaces, HQ } from '../lib/kakao.js';
 
 const TTL = 60 * 60 * 24 * 3; // 날짜 키 3일 자동 청소
-const SAMSUNG = { lat: 37.5085, lon: 127.0637 }; // 현대백화점 본사(테헤란로98길) 인근
+const SAMSUNG = HQ; // 현대백화점 본사(테헤란로98길) 인근 — lib/kakao.js와 좌표 공유
 
 async function redis(cmd) {
   const url = process.env.UPSTASH_REDIS_REST_URL, token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -43,6 +44,26 @@ async function getWeather() {
     if (t <= 8) return { tag: '추움', temp: t };
     return { tag: '선선', temp: t };
   } catch { return null; } // 날씨 실패는 침묵 폴백
+}
+
+// 오늘의 식당 목록. 카카오 결과를 하루 캐시하고, 실패하면 수기 목록으로 조용히 폴백한다.
+async function loadPlaces(dayKey) {
+  const key = process.env.KAKAO_REST_KEY;
+  if (!key) return { places: PLACES, source: 'manual' };
+  const kCache = `bapsaju:places:${dayKey}`;
+  try {
+    const hit = await redis(['GET', kCache]);
+    if (hit) return { places: JSON.parse(hit), source: 'kakao-cache' };
+  } catch { /* 캐시 실패는 무시하고 새로 긁는다 */ }
+  try {
+    const kakao = await fetchPlaces(key);
+    const merged = mergePlaces(kakao, PLACES);
+    try { await redis(['SET', kCache, JSON.stringify(merged), 'EX', String(60 * 60 * 24)]); } catch {}
+    return { places: merged, source: 'kakao' };
+  } catch (e) {
+    console.error('kakao', e.message);
+    return { places: PLACES, source: 'manual-fallback' };
+  }
 }
 
 export default async function handler(req, res) {
@@ -112,11 +133,12 @@ export default async function handler(req, res) {
         .filter(([name]) => members[name])
         .map(([name, mood]) => ({ name, mood, birth: members[name].birth }));
       if (!active.length) return res.status(400).json({ error: '아직 아무도 기분 입력 안 함' });
+      const { places, source } = await loadPlaces(today.key);
       const weather = await getWeather();
       const recent = JSON.parse(await redis(['GET', kRecent]) || '[]');
       const rejected = (await redis(['LRANGE', `bapsaju:${team}:reject:${today.key}`, '0', '-1'])) || [];
       const closed = (await redis(['SMEMBERS', kClosed])) || [];
-      const result = recommend(active, PLACES, {
+      const result = recommend(active, places, {
         weather: weather?.tag || null,
         recent: recent.filter(r => r.date !== today.key).map(r => r.name),
         rejected,
@@ -130,7 +152,7 @@ export default async function handler(req, res) {
       // 밥살 사람 월간 전적 — 같은 날 여러 번 뽑아도 1회만
       const first = await redis(['SET', `bapsaju:${team}:payday:${today.key}`, result.payer.name, 'NX', 'EX', String(TTL)]);
       if (first) { await redis(['HINCRBY', kStats, `pay:${result.payer.name}`, '1']); await redis(['EXPIRE', kStats, String(STATS_TTL)]); }
-      return res.json({ ...result, weather, count: active.length, names: active.map(a => a.name), rejects: rejected.length });
+      return res.json({ ...result, weather, count: active.length, names: active.map(a => a.name), rejects: rejected.length, poolSize: places.length, source });
     }
 
     // GET: 현재 상태 (멤버 목록 + 오늘 입력 현황)
